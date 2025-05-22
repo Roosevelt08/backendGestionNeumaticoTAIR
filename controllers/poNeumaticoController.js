@@ -1,8 +1,25 @@
 const db = require('../config/db');
 
 const getPoNeumaticos = async (req, res) => {
+    // Validar sesión y usuario
+    if (!req.session.user || !req.session.user.usuario) {
+        return res.status(401).json({ mensaje: 'No autenticado' });
+    }
     try {
-        const result = await db.query('SELECT * FROM SPEED400AT.PO_NEUMATICO');
+        // Obtener usuario y perfiles desde la sesión
+        const usuario = req.session.user?.usuario;
+        const perfiles = req.session.user?.perfiles?.map(p => p.codigo) || [];
+
+        let query = 'SELECT * FROM SPEED400AT.PO_NEUMATICO';
+        let params = [];
+
+        // Si el usuario NO tiene perfil 005 (OPERACIONES), filtra por USUARIO_SUPER
+        if (!perfiles.includes('005')) {
+            query += ' WHERE USUARIO_SUPER = ?';
+            params.push(usuario);
+        }
+
+        const result = await db.query(query, params);
 
         // Normalización de los datos
         const datosNormalizados = result.map((neumatico) => ({
@@ -156,14 +173,24 @@ const contarProyectosNeumatico = async (req, res) => {
 };
 
 const contarNeumaticos = async (req, res) => {
+    // Validar sesión y usuario
+    if (!req.session.user || !req.session.user.usuario) {
+        return res.status(401).json({ mensaje: 'No autenticado' });
+    }
     try {
-        const result = await db.query(
-            'SELECT COUNT(*) AS cantidad FROM SPEED400AT.PO_NEUMATICO'
-        );
-        // Imprime el resultado para ver su estructura
-        console.log('Resultado de contar neumáticos:', result);
+        const usuario = req.session.user?.usuario;
+        const perfiles = req.session.user?.perfiles?.map(p => p.codigo) || [];
 
-        // Si result es un array de objetos
+        let query = 'SELECT COUNT(*) AS cantidad FROM SPEED400AT.PO_NEUMATICO';
+        let params = [];
+
+        // Si NO es OPERACIONES (005), filtra por USUARIO_SUPER
+        if (!perfiles.includes('005')) {
+            query += ' WHERE USUARIO_SUPER = ?';
+            params.push(usuario);
+        }
+
+        const result = await db.query(query, params);
         const cantidad = Array.isArray(result) && result.length > 0
             ? (result[0].cantidad || result[0].CANTIDAD)
             : 0;
@@ -176,10 +203,24 @@ const contarNeumaticos = async (req, res) => {
 };
 
 const contarNeumaticosAsignados = async (req, res) => {
+    // Validar sesión y usuario
+    if (!req.session.user || !req.session.user.usuario) {
+        return res.status(401).json({ mensaje: 'No autenticado' });
+    }
     try {
-        const result = await db.query(
-            "SELECT COUNT(*) AS cantidad FROM SPEED400AT.PO_NEUMATICO WHERE ESTADO_ASIGNACION = 'ASIGNADO'"
-        );
+        const usuario = req.session.user?.usuario;
+        const perfiles = req.session.user?.perfiles?.map(p => p.codigo) || [];
+
+        let query = "SELECT COUNT(*) AS cantidad FROM SPEED400AT.PO_NEUMATICO WHERE ESTADO_ASIGNACION = 'ASIGNADO'";
+        let params = [];
+
+        // Si NO es OPERACIONES (005), filtra por USUARIO_SUPER
+        if (!perfiles.includes('005')) {
+            query += ' AND USUARIO_SUPER = ?';
+            params.push(usuario);
+        }
+
+        const result = await db.query(query, params);
         const cantidad = Array.isArray(result) && result.length > 0
             ? (result[0].cantidad || result[0].CANTIDAD)
             : 0;
@@ -191,10 +232,24 @@ const contarNeumaticosAsignados = async (req, res) => {
 };
 
 const contarNeumaticosDisponibles = async (req, res) => {
+    // Validar sesión y usuario
+    if (!req.session.user || !req.session.user.usuario) {
+        return res.status(401).json({ mensaje: 'No autenticado' });
+    }
     try {
-        const result = await db.query(
-            "SELECT COUNT(*) AS cantidad FROM SPEED400AT.PO_NEUMATICO WHERE ESTADO_ASIGNACION = 'DISPONIBLE'"
-        );
+        const usuario = req.session.user?.usuario;
+        const perfiles = req.session.user?.perfiles?.map(p => p.codigo) || [];
+
+        let query = "SELECT COUNT(*) AS cantidad FROM SPEED400AT.PO_NEUMATICO WHERE ESTADO_ASIGNACION = 'DISPONIBLE'";
+        let params = [];
+
+        // Si NO es OPERACIONES (005), filtra por USUARIO_SUPER
+        if (!perfiles.includes('005')) {
+            query += ' AND USUARIO_SUPER = ?';
+            params.push(usuario);
+        }
+
+        const result = await db.query(query, params);
         const cantidad = Array.isArray(result) && result.length > 0
             ? (result[0].cantidad || result[0].CANTIDAD)
             : 0;

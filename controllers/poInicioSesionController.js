@@ -1,6 +1,10 @@
 const db = require('../config/db');
 
 const login = async (req, res) => {
+    // Validar que se envíen usuario y password
+    if (!req.body.usuario || !req.body.password) {
+        return res.status(400).json({ error: 'Usuario y contraseña son requeridos' });
+    }
     const { usuario, password } = req.body;
     try {
         const users = await db.query(
@@ -29,7 +33,7 @@ const login = async (req, res) => {
             [usuario]
         );
 
-        // Guarda el usuario en la sesión
+        // Guarda el usuario en la sesión y fuerza el guardado
         req.session.user = {
             usuario: user.CH_CODI_USUARIO,
             nombre: user.VC_DESC_NOMB_USUARIO,
@@ -40,8 +44,12 @@ const login = async (req, res) => {
                 descripcion: p.VC_DESC_PERFIL
             }))
         };
-
-        res.json(req.session.user);
+        req.session.save((err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error al guardar la sesión' });
+            }
+            res.json(req.session.user);
+        });
     } catch (error) {
         res.status(500).json({ error: 'Error en el login' });
     }
