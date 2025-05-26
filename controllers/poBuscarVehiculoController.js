@@ -30,7 +30,7 @@ const buscarVehiculoPorPlaca = async (req, res) => {
              LOCATE(' ', TRIM(SUP.APE) || ' ') - 1
            ) AS USUARIO_SUPER
       FROM SPEED400AT.PO_VEHICULO      V
-      JOIN SPEED400AT.PO_OPERACIONES   OP  ON V.IDOPE = OP.ID
+      JOIN SPEED400AT.PO_OPERACIONES   OP  ON V.SECOPE = OP.ID
       JOIN SPEED400AT.PO_SUPERVISORES  SUP ON OP.IDSUP = SUP.CODPLA
       LEFT JOIN SPEED400AT.PO_MODELO   MO  ON V.IDMOD = MO.ID
       LEFT JOIN SPEED400AT.PO_MARCA    M   ON V.IDMAR = M.ID
@@ -90,7 +90,7 @@ const buscarVehiculoPorPlacaEmpresa = async (req, res) => {
              LOCATE(' ', TRIM(SUP.APE) || ' ') - 1
            ) AS USUARIO_SUPER
       FROM SPEED400AT.PO_VEHICULO      V
-      JOIN SPEED400AT.PO_OPERACIONES   OP  ON V.IDOPE = OP.ID
+      JOIN SPEED400AT.PO_OPERACIONES   OP  ON V.SECOPE = OP.ID
       JOIN SPEED400AT.PO_SUPERVISORES  SUP ON OP.IDSUP = SUP.CODPLA
       LEFT JOIN SPEED400AT.PO_MODELO   MO  ON V.IDMOD = MO.ID
       LEFT JOIN SPEED400AT.PO_MARCA    M   ON V.IDMAR = M.ID
@@ -135,7 +135,7 @@ const obtenerCantidadPlacas = async (req, res) => {
       SELECT COUNT(*) AS cantidad_placas
       FROM SPEED400AT.PO_SUPERVISORES sup
       JOIN SPEED400AT.PO_OPERACIONES op ON sup.CODPLA = op.IDSUP
-      JOIN SPEED400AT.PO_VEHICULO veh ON veh.IDOPE = op.ID
+      JOIN SPEED400AT.PO_VEHICULO veh ON veh.SECOPE = op.ID
       WHERE
         SUBSTR(TRIM(sup.NOM), 1, 1)
         || SUBSTR(
@@ -170,7 +170,7 @@ const obtenerCantidadPlacasPorSupervisor = async (req, res) => {
           veh.NUMPLA
         FROM SPEED400AT.PO_SUPERVISORES sup
         JOIN SPEED400AT.PO_OPERACIONES op ON sup.CODPLA = op.IDSUP
-        JOIN SPEED400AT.PO_VEHICULO veh ON veh.IDOPE = op.ID
+        JOIN SPEED400AT.PO_VEHICULO veh ON veh.SECOPE = op.ID
       ) t
       GROUP BY USUARIO_SUPER
       ORDER BY USUARIO_SUPER
