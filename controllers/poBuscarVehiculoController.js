@@ -66,7 +66,7 @@ const buscarVehiculoPorPlaca = async (req, res) => {
   }
 };
 
-// Buscar vehículo por placa en toda la empresa (sin filtro de usuario)
+// Buscar vehículo por placa en toda la empresa (sin filtro de usuario, pero oculta placas del usuario autenticado)
 const buscarVehiculoPorPlacaEmpresa = async (req, res) => {
   try {
     const { placa } = req.params;
@@ -107,6 +107,13 @@ const buscarVehiculoPorPlacaEmpresa = async (req, res) => {
     `;
     const result = await db.query(query, [placaLimpia]);
     if (result && result.length > 0) {
+      // Si el usuario está autenticado y la placa es suya, mostrar mensaje especial
+      if (req.session.user && req.session.user.usuario) {
+        const usuario = req.session.user.usuario.trim().toUpperCase();
+        if (result[0].USUARIO_SUPER === usuario) {
+          return res.status(200).json({ mensaje: "Esa placa la tienes asignada en tu operación" });
+        }
+      }
       res.json(result[0]);
     } else {
       res.status(404).json({ mensaje: "Vehículo no encontrado" });
