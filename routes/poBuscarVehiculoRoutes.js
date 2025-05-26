@@ -87,6 +87,87 @@ router.get('/cantidad-por-supervisor', poBuscarVehiculoController.obtenerCantida
 
 /**
  * @swagger
+ * /api/vehiculo/buscar-todas/{placa}:
+ *   get:
+ *     summary: Buscar vehículo por placa en toda la empresa (sin filtro de usuario)
+ *     description: Devuelve información detallada del vehículo cuya placa coincida, sin importar el usuario asignado.
+ *     tags:
+ *       - Vehículos
+ *     parameters:
+ *       - in: path
+ *         name: placa
+ *         required: true
+ *         description: Placa del vehículo a buscar
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Información detallada del vehículo (toda la empresa)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 PLACA:
+ *                   type: string
+ *                   example: "BHG-874"
+ *                 MARCA:
+ *                   type: string
+ *                   example: "TOYOTA"
+ *                 MODELO:
+ *                   type: string
+ *                   example: "HILUX"
+ *                 TIPO:
+ *                   type: string
+ *                   example: "CAMIONETA"
+ *                 COLOR:
+ *                   type: string
+ *                   example: "BLANCO"
+ *                 ANO:
+ *                   type: integer
+ *                   example: 2022
+ *                 KILOMETRAJE:
+ *                   type: integer
+ *                   example: 35000
+ *                 PROYECTO:
+ *                   type: string
+ *                   example: "TAR ARQUIPA"
+ *                 ID_OPERACION:
+ *                   type: integer
+ *                   example: 1234
+ *                 OPERACION:
+ *                   type: string
+ *                   example: "TAR ARQUIPA"
+ *                 USUARIO_SUPER:
+ *                   type: string
+ *                   example: "LVARGAS"
+ *       404:
+ *         description: Vehículo no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 mensaje:
+ *                   type: string
+ *                   example: Vehículo no encontrado
+ *       500:
+ *         description: Error del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Error al buscar vehículo por placa (empresa)
+ *                 detalle:
+ *                   type: string
+ */
+router.get('/buscar-todas/:placa', poBuscarVehiculoController.buscarVehiculoPorPlacaEmpresa);
+
+/**
+ * @swagger
  * /api/vehiculo/{placa}:
  *   get:
  *     summary: Buscar vehículo por placa (solo placas asignadas al usuario autenticado)

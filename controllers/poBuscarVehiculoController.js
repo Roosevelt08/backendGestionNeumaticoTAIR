@@ -66,6 +66,57 @@ const buscarVehiculoPorPlaca = async (req, res) => {
   }
 };
 
+// Buscar vehículo por placa en toda la empresa (sin filtro de usuario)
+const buscarVehiculoPorPlacaEmpresa = async (req, res) => {
+  try {
+    const { placa } = req.params;
+    const placaLimpia = placa.trim().toUpperCase();
+    const query = `
+      SELECT
+        V.NUMPLA       AS PLACA,
+        M.DESCRIPCION  AS MARCA,
+        MO.DESMODGEN   AS MODELO,
+        T.DESCRIPCION  AS TIPO,
+        V.COLOR,
+        V.ANO,
+        V.KILOMETRAJE,
+        TA.DESCRIPCION AS PROYECTO,
+        OP.ID          AS ID_OPERACION,
+        OP.DESCRIPCION AS OPERACION,
+        SUBSTR(TRIM(SUP.NOM), 1, 1)
+        || SUBSTR(
+             TRIM(SUP.APE),
+             1,
+             LOCATE(' ', TRIM(SUP.APE) || ' ') - 1
+           ) AS USUARIO_SUPER
+      FROM SPEED400AT.PO_VEHICULO      V
+      JOIN SPEED400AT.PO_OPERACIONES   OP  ON V.IDOPE = OP.ID
+      JOIN SPEED400AT.PO_SUPERVISORES  SUP ON OP.IDSUP = SUP.CODPLA
+      LEFT JOIN SPEED400AT.PO_MODELO   MO  ON V.IDMOD = MO.ID
+      LEFT JOIN SPEED400AT.PO_MARCA    M   ON V.IDMAR = M.ID
+      LEFT JOIN SPEED400AT.PO_TIPO     T   ON V.IDTIP = T.ID
+      LEFT JOIN SPEED400AT.PO_TALLER   TA  ON TA.CH_CODI_RESPONSABLE =
+        SUBSTR(TRIM(SUP.NOM), 1, 1)
+        || SUBSTR(
+             TRIM(SUP.APE),
+             1,
+             LOCATE(' ', TRIM(SUP.APE) || ' ') - 1
+           )
+      WHERE TRIM(V.NUMPLA) = ?
+      ORDER BY V.NUMPLA
+    `;
+    const result = await db.query(query, [placaLimpia]);
+    if (result && result.length > 0) {
+      res.json(result[0]);
+    } else {
+      res.status(404).json({ mensaje: "Vehículo no encontrado" });
+    }
+  } catch (error) {
+    console.error("❌ Error al buscar vehículo (empresa):", error, error.stack);
+    res.status(500).json({ error: "Error al buscar vehículo por placa (empresa)", detalle: error.message });
+  }
+};
+
 // Obtener la cantidad de placas/vehículos asignados al usuario autenticado usando la lógica de usuario_super
 const obtenerCantidadPlacas = async (req, res) => {
   if (!req.session.user || !req.session.user.usuario) {
@@ -129,6 +180,7 @@ const obtenerCantidadPlacasPorSupervisor = async (req, res) => {
 
 module.exports = {
   buscarVehiculoPorPlaca,
+  buscarVehiculoPorPlacaEmpresa,
   obtenerCantidadPlacas,
-  obtenerCantidadPlacasPorSupervisor,
+  obtenerCantidadPlacasPorSupervisor
 };
