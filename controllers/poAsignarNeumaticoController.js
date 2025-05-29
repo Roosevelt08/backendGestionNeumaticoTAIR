@@ -35,7 +35,16 @@ const asignarNeumatico = async (req, res) => {
         res.status(200).json({ mensaje: "Neumático asignado correctamente." });
 
     } catch (error) {
-        console.error("❌ Error al asignar neumático:", error);
+        // Imprime el error completo para depuración
+        console.error("❌ Error al asignar neumático:", JSON.stringify(error, null, 2));
+        // Busca el mensaje en cualquier parte del error
+        const errorMsg = JSON.stringify(error);
+        if (errorMsg.includes("ya se encuentra asignado a otro vehículo o posición")) {
+            return res.status(409).json({
+                error: "El neumático ya está asignado a otro vehículo o posición.",
+                detalle: "El neumático ya se encuentra asignado a otro vehículo o posición."
+            });
+        }
         res.status(500).json({
             error: "Error a asignar neumático.",
             detalle: error.message,

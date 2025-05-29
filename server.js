@@ -17,12 +17,16 @@ const swaggerJSDoc = require('swagger-jsdoc');
 
 const app = express();
 // CORS dinámico para devolver el origen correcto
-const allowedOrigins = ['http://192.168.5.207:3000', 'http://localhost:3000'];
+const allowedOrigins = [
+  'http://192.168.5.207:3000',
+  'http://localhost:3000',
+  'http://192.168.5.207:3001', // Swagger UI embebido
+  null // Para peticiones sin origin (opcional, para pruebas locales)
+];
 app.use(cors({
   origin: function(origin, callback) {
     // Permitir requests sin origin (como Postman o curl)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
       return callback(new Error('Not allowed by CORS'));

@@ -1,162 +1,191 @@
-const xlsx = require("xlsx");
 const db = require("../config/db");
-const path = require("path");
+const xlsx = require("xlsx");
 
 const cargarPadronDesdeExcel = async (req, res) => {
     try {
-        const rutaExcel = req.file?.path;
-        if (!rutaExcel) {
+        // Leer archivo desde buffer en memoria (multer memoryStorage)
+        const bufferExcel = req.file?.buffer;
+        if (!bufferExcel) {
             return res.status(400).json({ error: 'No se recibió ningún archivo.' });
         }
 
-        const workbook = xlsx.readFile(rutaExcel);
+        // Leer el archivo Excel desde buffer
+        const workbook = xlsx.read(bufferExcel, { type: 'buffer' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const data = xlsx.utils.sheet_to_json(worksheet, {
-            defval: '',
-            raw: false,
-        });
+        const data = xlsx.utils.sheet_to_json(worksheet, { defval: '', raw: false });
 
-        console.log('📁 Ruta Excel:', rutaExcel);
+        if (data.length === 0) {
+            return res.status(400).json({ error: "El archivo Excel está vacío." });
+        }
+
+        // Obtener los nombres de las columnas
+        const encabezados = Object.keys(data[0]);
+
+        // Utilidad para limpiar encabezados
+        function limpiarEncabezado(str) {
+            return str.toUpperCase().replace(/\s+/g, ' ').replace(/\n/g, ' ').trim();
+        }
+        // Mapeo dinámico de columnas tolerante a espacios y saltos de línea
+        const columnas = {
+            CODIGO: encabezados.find(col => limpiarEncabezado(col).includes("CODIGO")),
+            MARCA: encabezados.find(col => limpiarEncabezado(col).includes("MARCA")),
+            MEDIDA: encabezados.find(col => limpiarEncabezado(col).includes("MEDIDA")),
+            DISENO: encabezados.find(col => limpiarEncabezado(col).includes("DISEÑO") || limpiarEncabezado(col).includes("DISENO")),
+            REMANENTE: encabezados.find(col => limpiarEncabezado(col).includes("REMANENTE")),
+            PR: encabezados.find(col => limpiarEncabezado(col).includes("PR")),
+            CARGA: encabezados.find(col => limpiarEncabezado(col).includes("CARGA")),
+            VELOCIDAD: encabezados.find(col => limpiarEncabezado(col).includes("VELOCIDAD")),
+            FECHA_FABRICACION_COD: encabezados.find(col => limpiarEncabezado(col).includes("FECHA FABRICACION") || limpiarEncabezado(col).includes("FECHA FABRICACIÓN")),
+            RQ: encabezados.find(col => limpiarEncabezado(col).includes("RQ")),
+            OC: encabezados.find(col => limpiarEncabezado(col).includes("OC")),
+            PROYECTO: encabezados.find(col => limpiarEncabezado(col).includes("PROYECTO")),
+            COSTO: encabezados.find(col => limpiarEncabezado(col).includes("COSTO")),
+            PROVEEDOR: encabezados.find(col => limpiarEncabezado(col).includes("PROVEEDOR")),
+            FECHA_COMPRA: encabezados.find(col => limpiarEncabezado(col).includes("FECHA COMPRA"))
+        };
+
+        // Si no hay ninguna columna reconocida, rechazar
+        if (Object.values(columnas).every(col => !col)) {
+            return res.status(400).json({ error: "El archivo Excel no contiene ninguna columna reconocida." });
+        }
 
         let insertados = 0;
         let errores = [];
 
         for (const fila of data) {
-            const filaLimpia = {
-                CODIGO: parseInt(fila.CODIGO),
-                MARCA: fila.MARCA.trim(),
-                MEDIDA: fila.MEDIDA.trim(),
-                DISENO: fila.DISEÑO.trim(),
-                REMANENTE: parseInt(fila.REMANENTE),
-                PR: parseInt(fila.PR),
-                CARGA: parseInt(fila.CARGA),
-                VELOCIDAD: fila.VELOCIDAD.trim(),
-                RQ: parseInt(fila.RQ),
-                OC: fila.OC || 0, // Si OC puede ser nulo, envía 0 como valor por defecto
-                PROYECTO: fila.PROYECTO.trim(),
-                COSTO: parseFloat(fila.COSTO),
-                PROVEEDOR: fila.PROVEEDOR.trim(),
-                FECHA: new Date(fila.FECHA).toISOString().split('T')[0],
-                USUARIO_SUPER: fila.USUARIO_SUPER ? fila.USUARIO_SUPER.trim() : '',
-                USUARIO_CARGA: 'sistema',
-                ARCHIVO_ORIGEN: req.file.originalname,
-                FILA: parseInt(fila.CODIGO)
-            };
-
-            const erroresFila = [];
-
-            // Validar si el código ya existe
-            const [existeCodigo] = await db.query(`SELECT 1 FROM SPEED400AT.PO_NEUMATICO WHERE CODIGO = ?`, [filaLimpia.CODIGO]);
-            if (existeCodigo) {
-                erroresFila.push(`El código ${filaLimpia.CODIGO} ya existe en la base de datos.`);
-            }
-
-            // Si ya hay un error, no continuar con las demás validaciones
-            if (erroresFila.length === 0) {
-                // Validar si la marca está registrada
-                const [existeMarca] = await db.query(`SELECT 1 FROM SPEED400AT.MARCA_NEUMATICO WHERE NOMBRE = ?`, [filaLimpia.MARCA]);
-                if (!existeMarca) {
-                    erroresFila.push(`La marca "${filaLimpia.MARCA}" no está registrada.`);
+            let erroresFila = [];
+            let codigo = columnas.CODIGO ? (fila[columnas.CODIGO] || '').toString().trim() : null;
+            if (codigo) {
+                // Forzar schema SPEED400AT
+                const existe = await db.query('SELECT 1 FROM SPEED400AT.PO_NEUMATICO WHERE CODIGO = ?', [codigo]);
+                if (existe && existe.length > 0) {
+                    erroresFila.push('Código duplicado: ya existe en la base de datos.');
                 }
+            } else {
+                erroresFila.push('Código no especificado.');
             }
 
-            // Si ya hay un error, no continuar con las demás validaciones
-            if (erroresFila.length === 0) {
-                // Validar si el proveedor está registrado
-                const [existeProveedor] = await db.query(`SELECT 1 FROM SPEED400AT.PROVEEDOR_NEUMATICO WHERE NOMBRE = ?`, [filaLimpia.PROVEEDOR]);
-                if (!existeProveedor) {
-                    erroresFila.push(`El proveedor "${filaLimpia.PROVEEDOR}" no está registrado.`);
+            let marca = columnas.MARCA ? (fila[columnas.MARCA] || '').trim() : null;
+            if (marca) {
+                // Forzar schema SPEED400AT
+                const existeMarca = await db.query('SELECT 1 FROM SPEED400AT.NEU_MARCA WHERE UPPER(MARCA) = ?', [marca.toUpperCase()]);
+                if (!existeMarca || existeMarca.length === 0) {
+                    erroresFila.push(`Marca inválida o mal escrita: '${marca}'.`);
                 }
+            } else {
+                erroresFila.push('Marca no especificada.');
             }
 
-            // Si ya hay un error, no continuar con las demás validaciones
-            if (erroresFila.length === 0) {
-                // Validar si el proyecto tiene un responsable asignado
-                const [existeProyecto] = await db.query(`
-                    SELECT CH_CODI_RESPONSABLE
-                    FROM SPEED400AT.PO_TALLER
-                    WHERE DESCRIPCION = ?
-                `, [filaLimpia.PROYECTO]);
-                if (!existeProyecto || !existeProyecto.CH_CODI_RESPONSABLE) {
-                    erroresFila.push(`El proyecto "${filaLimpia.PROYECTO}" no existe o no tiene un responsable asignado.`);
+            let medida = columnas.MEDIDA ? (fila[columnas.MEDIDA] || '').trim() : null;
+            if (medida) {
+                const existeMedida = await db.query('SELECT 1 FROM SPEED400AT.NEU_MEDIDA WHERE MEDIDA = ?', [medida]);
+                if (!existeMedida || existeMedida.length === 0) {
+                    erroresFila.push(`Medida inválida o mal escrita: '${medida}'.`);
                 }
+            } else {
+                erroresFila.push('Medida no especificada.');
             }
 
-            // Si hay errores en la fila, los agregamos al array de errores y continuamos con la siguiente fila
+            let diseno = columnas.DISENO ? (fila[columnas.DISENO] || '').trim() : null;
+            if (diseno) {
+                const existeDiseno = await db.query('SELECT 1 FROM SPEED400AT.NEU_DISENO WHERE DISENO = ?', [diseno]);
+                if (!existeDiseno || existeDiseno.length === 0) {
+                    erroresFila.push(`Diseño inválido o mal escrito: '${diseno}'.`);
+                }
+            } else {
+                erroresFila.push('Diseño no especificado.');
+            }
+
             if (erroresFila.length > 0) {
-                errores.push({
-                    fila: filaLimpia.CODIGO,
-                    mensaje: erroresFila[0] // Solo mostrar el primer error
-                });
+                errores.push({ fila: codigo || '', mensaje: erroresFila.join(' ') });
                 continue;
             }
 
-            console.log("⚙️ Ejecutando SP con datos:", filaLimpia);
             try {
-                const query = `CALL SPEED400AT.SP_INSERTAR_PADRON_NEUMATICO(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-                const params = [
-                    filaLimpia.CODIGO,
-                    filaLimpia.MARCA,
-                    filaLimpia.MEDIDA,
-                    filaLimpia.DISENO,
-                    filaLimpia.REMANENTE,
-                    filaLimpia.PR,
-                    filaLimpia.CARGA,
-                    filaLimpia.VELOCIDAD,
-                    filaLimpia.RQ,
-                    filaLimpia.OC,
-                    filaLimpia.PROYECTO,
-                    filaLimpia.COSTO,
-                    filaLimpia.PROVEEDOR,
-                    filaLimpia.FECHA
-                ];
-
-                console.log("🧾 Query:", query);
-                try {
-                    await db.query(query, params);
-                    insertados++;
-                } catch (error) {
-                    const mensajeError = error?.message || error?.sqlMessage || 'Error desconocido';
-                    console.error("❌ Error al insertar fila:", mensajeError);
-                    errores.push({
-                        fila: filaLimpia.CODIGO,
-                        mensaje: mensajeError
-                    });
+                // Obtener IDs de marca, medida y diseño
+                let idMarca = null;
+                if (marca) {
+                    const resMarca = await db.query('SELECT ID_MARCA FROM SPEED400AT.NEU_MARCA WHERE UPPER(MARCA) = ?', [marca.toUpperCase()]);
+                    if (resMarca && resMarca.length > 0) idMarca = resMarca[0].ID_MARCA;
                 }
+                let idMedida = null;
+                if (medida) {
+                    const resMedida = await db.query('SELECT ID_MEDIDA FROM SPEED400AT.NEU_MEDIDA WHERE MEDIDA = ?', [medida]);
+                    if (resMedida && resMedida.length > 0) idMedida = resMedida[0].ID_MEDIDA;
+                }
+                let idDiseno = null;
+                if (diseno) {
+                    const resDiseno = await db.query('SELECT ID_DISENO FROM SPEED400AT.NEU_DISENO WHERE DISENO = ?', [diseno]);
+                    if (resDiseno && resDiseno.length > 0) idDiseno = resDiseno[0].ID_DISENO;
+                }
+
+                const filaLimpia = {
+                    CODIGO: columnas.CODIGO ? (fila[columnas.CODIGO] || '').toString().trim() : null,
+                    MARCA: columnas.MARCA ? (fila[columnas.MARCA] || '').trim() : null,
+                    MEDIDA: columnas.MEDIDA ? (fila[columnas.MEDIDA] || '').trim() : null,
+                    DISENO: columnas.DISENO ? (fila[columnas.DISENO] || '').trim() : null,
+                    REMANENTE: columnas.REMANENTE ? (parseInt(fila[columnas.REMANENTE]) || 0) : null,
+                    PR: columnas.PR ? (fila[columnas.PR] || '').toString().trim() : null,
+                    CARGA: columnas.CARGA ? (fila[columnas.CARGA] || '').toString().trim() : null,
+                    VELOCIDAD: columnas.VELOCIDAD ? (fila[columnas.VELOCIDAD] || '').trim() : null,
+                    FECHA_FABRICACION_COD: columnas.FECHA_FABRICACION_COD ? (fila[columnas.FECHA_FABRICACION_COD] || '').toString().trim() : null,
+                    RQ: columnas.RQ ? (fila[columnas.RQ] || '').toString().trim() : null,
+                    OC: columnas.OC ? (fila[columnas.OC] || '').toString().trim() : null,
+                    PROYECTO: columnas.PROYECTO ? (fila[columnas.PROYECTO] || '').trim() : null,
+                    COSTO: columnas.COSTO ? (parseFloat(fila[columnas.COSTO]) || 0) : null,
+                    PROVEEDOR: columnas.PROVEEDOR ? (fila[columnas.PROVEEDOR] || '').trim() : null,
+                    FECHA_COMPRA: columnas.FECHA_COMPRA && fila[columnas.FECHA_COMPRA]
+                        ? (() => {
+                            const valor = fila[columnas.FECHA_COMPRA];
+                            if (typeof valor === 'number') {
+                                // Fecha Excel numérica
+                                const fecha = new Date(Date.UTC(1899, 11, 30) + valor * 86400000);
+                                return fecha.toISOString().split('T')[0];
+                            }
+                            if (typeof valor === 'string') {
+                                const v = valor.trim();
+                                if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) {
+                                    const [dia, mes, anio] = v.split('/');
+                                    return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+                                }
+                                const d = new Date(v);
+                                return isNaN(d) ? null : d.toISOString().split('T')[0];
+                            }
+                            return null;
+                        })()
+                        : null,
+                    ID_MARCA: idMarca,
+                    ID_MEDIDA: idMedida,
+                    ID_DISENO: idDiseno
+                };
+
+                const query = `CALL SPEED400AT.SP_INSERTAR_PO_NEUMATICO(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                const params = [
+                    filaLimpia.CODIGO, filaLimpia.MARCA, filaLimpia.MEDIDA, filaLimpia.DISENO,
+                    filaLimpia.REMANENTE, filaLimpia.PR, filaLimpia.CARGA, filaLimpia.VELOCIDAD,
+                    filaLimpia.FECHA_FABRICACION_COD, filaLimpia.RQ, filaLimpia.OC, filaLimpia.PROYECTO,
+                    filaLimpia.COSTO, filaLimpia.PROVEEDOR, filaLimpia.FECHA_COMPRA
+                ];
+                await db.query(query, params);
+                insertados++;
             } catch (error) {
-                const mensajeError = error?.message || error?.sqlMessage || 'Error desconocido';
-                console.error("❌ Error al insertar fila:", mensajeError);
-                errores.push({
-                    fila: filaLimpia.CODIGO,
-                    mensaje: mensajeError
-                });
+                errores.push({ fila: codigo || '', mensaje: error.message || "Error desconocido" });
             }
         }
 
-        let mensajeFinal = "";
+        let mensajeFinal = insertados === data.length
+            ? "Padrón actualizado correctamente. Todos los registros fueron insertados."
+            : insertados === 0
+            ? "Carga no realizada. Todos los registros tienen errores."
+            : `Carga parcial: ${insertados} insertados de ${data.length} registros.`;
 
-        if (insertados === data.length) {
-            mensajeFinal = "Padrón actualizado correctamente. Todos los registros fueron insertados.";
-        } else if (insertados === 0 && errores.length > 0) {
-            mensajeFinal = "Carga no realizada. Todos los registros tienen errores.";
-        } else {
-            mensajeFinal = `Carga parcial: ${insertados} insertados de ${data.length} registros.`;
-        }
-
-        res.json({
-            mensaje: "Carga finalizada",
-            total: data.length,
-            insertados,
-            errores
-        });
-
+        // Siempre responder 200 con el detalle de errores de filas
+        return res.status(200).json({ mensaje: mensajeFinal, total: data.length, insertados, errores });
     } catch (err) {
+        // Solo aquí devolver 500 si el error es global (por ejemplo, archivo corrupto, sin conexión, etc)
         console.error("Error general:", err);
-        res.status(500).json({
-            error: "Error al procesar el padrón",
-            detalle: err.message,
-        });
+        res.status(500).json({ error: "Error al procesar el padrón", detalle: err.message });
     }
 };
 
