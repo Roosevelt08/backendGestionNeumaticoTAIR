@@ -29,7 +29,7 @@ const getPoNeumaticos = async (req, res) => {
             DISEÑO: neumatico.DISEÑO || '', // Asegurar que DISEÑO no sea nulo
             REMANENTE: neumatico.REMANENTE || '', // Asegurar que REMANENTE no sea nulo
             MEDIDA: neumatico.MEDIDA || '', // Asegurar que MEDIDA no sea nulo
-            FECHA: neumatico.FECHA || '', // Asegurar que FECHA no sea nulo
+            FECHA_FABRICACION_COD: neumatico.FECHA_FABRICACION_COD || '', // Asegurar que FECHA no sea nulo
             ESTADO: neumatico.ESTADO || '', // Asegurar que ESTADO no sea nulo
             PROYECTO: neumatico.PROYECTO || '', // Asegurar que PROYECTO no sea nulo
         }));
@@ -211,7 +211,7 @@ const contarNeumaticosAsignados = async (req, res) => {
         const usuario = req.session.user?.usuario;
         const perfiles = req.session.user?.perfiles?.map(p => p.codigo) || [];
 
-        let query = "SELECT COUNT(*) AS cantidad FROM SPEED400AT.PO_NEUMATICO WHERE ESTADO_ASIGNACION = 'ASIGNADO'";
+        let query = "SELECT COUNT(*) AS cantidad FROM SPEED400AT.PO_NEUMATICO WHERE TIPO_MOVIMIENTO = 'ASIGNADO'";
         let params = [];
 
         // Si NO es OPERACIONES (005), filtra por USUARIO_SUPER
@@ -240,7 +240,7 @@ const contarNeumaticosDisponibles = async (req, res) => {
         const usuario = req.session.user?.usuario;
         const perfiles = req.session.user?.perfiles?.map(p => p.codigo) || [];
 
-        let query = "SELECT COUNT(*) AS cantidad FROM SPEED400AT.PO_NEUMATICO WHERE ESTADO_ASIGNACION = 'DISPONIBLE'";
+        let query = "SELECT COUNT(*) AS cantidad FROM SPEED400AT.PO_NEUMATICO WHERE TIPO_MOVIMIENTO = 'DISPONIBLE'";
         let params = [];
 
         // Si NO es OPERACIONES (005), filtra por USUARIO_SUPER

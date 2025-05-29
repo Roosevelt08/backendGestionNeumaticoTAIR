@@ -8,19 +8,22 @@ const listarNeumaticosAsignados = async (req, res) => {
             return res.status(400).json({ error: "La placa es requerida" });
         }
 
-        const query = `CALL SPEED400AT.SP_LISTAR_NEU_ASIGNADOS(?)`;
+        const query = `CALL SPEED400AT.SP_LISTAR_NEU_ASIGNADO(?)`;
         console.log(`🟡 Ejecutando query: ${query} con placa: ${placa}`);
 
         const result = await db.query(query, [placa]);
         console.log("🔵 Resultado crudo del SP:", JSON.stringify(result, null, 2));
 
-        res.json(result);
+        // Manejo seguro del resultado del SP
+        // MySQL suele devolver [ [rows], ... ]
+        const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : [];
+        res.json(rows);
     } catch (error) {
-        console.error("❌ Error al consultar SP_LISTAR_NEU_ASIGNADOS:", error);
+        console.error("❌ Error al consultar SP_LISTAR_NEU_ASIGNADO:", error);
         res.status(500).json({ error: "Error al obtener neumáticos asignados" });
     }
 };
-
+ 
 const eliminarAsignacion = async (req, res) => {
     const { id } = req.params;
 
@@ -32,7 +35,7 @@ const eliminarAsignacion = async (req, res) => {
     try {
         // Ejecutamos el DELETE
         const result = await db.query(
-            'DELETE FROM SPEED400AT.NEU_ASIGNADOS WHERE ID = ?',
+            'DELETE FROM SPEED400AT.NEU_ASIGNADO WHERE ID_ASIGNADO = ?',
             [id]
         );
 
