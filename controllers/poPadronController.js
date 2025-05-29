@@ -97,6 +97,20 @@ const cargarPadronDesdeExcel = async (req, res) => {
                 erroresFila.push('Diseño no especificado.');
             }
 
+            // Validar proveedor: buscar nombre por código (PROCVE)
+            let proveedorNombre = null;
+            let proveedorCodigo = columnas.PROVEEDOR ? (fila[columnas.PROVEEDOR] || '').trim() : null;
+            if (proveedorCodigo) {
+                const resProveedor = await db.query('SELECT PRONOM FROM SPEED400AT.TPROV WHERE PROCVE = ?', [proveedorCodigo]);
+                if (resProveedor && resProveedor.length > 0) {
+                    proveedorNombre = resProveedor[0].PRONOM;
+                } else {
+                    erroresFila.push(`Proveedor no encontrado para código: '${proveedorCodigo}'.`);
+                }
+            } else {
+                erroresFila.push('Proveedor no especificado.');
+            }
+
             if (erroresFila.length > 0) {
                 errores.push({ fila: codigo || '', mensaje: erroresFila.join(' ') });
                 continue;
@@ -134,7 +148,7 @@ const cargarPadronDesdeExcel = async (req, res) => {
                     OC: columnas.OC ? (fila[columnas.OC] || '').toString().trim() : null,
                     PROYECTO: columnas.PROYECTO ? (fila[columnas.PROYECTO] || '').trim() : null,
                     COSTO: columnas.COSTO ? (parseFloat(fila[columnas.COSTO]) || 0) : null,
-                    PROVEEDOR: columnas.PROVEEDOR ? (fila[columnas.PROVEEDOR] || '').trim() : null,
+                    PROVEEDOR: proveedorNombre, // Usar el nombre del proveedor
                     FECHA_COMPRA: columnas.FECHA_COMPRA && fila[columnas.FECHA_COMPRA]
                         ? (() => {
                             const valor = fila[columnas.FECHA_COMPRA];
