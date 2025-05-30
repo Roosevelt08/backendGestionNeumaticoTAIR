@@ -8,19 +8,32 @@ const listarNeumaticosAsignados = async (req, res) => {
             return res.status(400).json({ error: "La placa es requerida" });
         }
 
-        const query = `CALL SPEED400AT.SP_LISTAR_NEU_ASIGNADO(?)`;
-        console.log(`🟡 Ejecutando query: ${query} con placa: ${placa}`);
+        // Hacemos el TRIM de la placa en el backend para evitar problemas con el parámetro en DB2
+        const placaTrim = placa.trim();
+        const query = `SELECT * FROM SPEED400AT.NEU_ASIGNADO WHERE TRIM(PLACA) = ?`;
+        console.log(`🟡 Ejecutando query directa: ${query} con placa: ${placaTrim}`);
 
-        const result = await db.query(query, [placa]);
-        console.log("🔵 Resultado crudo del SP:", JSON.stringify(result, null, 2));
+        const result = await db.query(query, [placaTrim]);
+        console.log("🔵 Resultado crudo de la consulta directa:", JSON.stringify(result, null, 2));
 
-        // Manejo seguro del resultado del SP
-        // MySQL suele devolver [ [rows], ... ]
-        const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : [];
-        res.json(rows);
+        // Detectar si el resultado es un array, o si viene en result.rows o result.recordset
+        let data = result;
+        if (result && typeof result === 'object') {
+            if (Array.isArray(result)) {
+                data = result;
+            } else if (Array.isArray(result.rows)) {
+                data = result.rows;
+            } else if (Array.isArray(result.recordset)) {
+                data = result.recordset;
+            } else {
+                // Si es un solo objeto, lo envolvemos en array
+                data = [result];
+            }
+        }
+        res.json(data);
     } catch (error) {
-        console.error("❌ Error al consultar SP_LISTAR_NEU_ASIGNADO:", error);
-        res.status(500).json({ error: "Error al obtener neumáticos asignados" });
+        console.error("❌ Error al consultar NEU_ASIGNADO:", error);
+        res.status(500).json({ error: error.message || "Error al obtener neumáticos asignados" });
     }
 };
  

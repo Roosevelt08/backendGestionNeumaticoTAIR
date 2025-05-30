@@ -181,6 +181,8 @@ const cargarPadronDesdeExcel = async (req, res) => {
                     filaLimpia.FECHA_FABRICACION_COD, filaLimpia.RQ, filaLimpia.OC, filaLimpia.PROYECTO,
                     filaLimpia.COSTO, filaLimpia.PROVEEDOR, filaLimpia.FECHA_COMPRA
                 ];
+                //console.log("🧪 Ejecutando query:", query);
+                //console.log("🧪 Con parámetros:", params);
                 await db.query(query, params);
                 insertados++;
             } catch (error) {

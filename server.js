@@ -72,7 +72,7 @@ app.use("/api/po-asignados", poAsignadosRoutes);
 app.use("/api/po-supervisores", poSupervisoresRoutes);
 app.use("/api/po-padron", padronRoutes);
 app.use("/api/vehiculo", poBuscarVehiculoRoutes);
-app.use("/api/asignar-neumatico", poAsignarNeumaticoRoutes);
+app.use("/api/po-asignar-neumatico", poAsignarNeumaticoRoutes);
 
 
 
