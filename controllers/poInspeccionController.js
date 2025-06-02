@@ -5,37 +5,6 @@ const crearInspeccion = async (req, res) => {
 
     // Validar datos recibidos antes de continuar
     try {
-        console.log('Datos recibidos para inspección:', datos);
-        // Mostrar los campos esperados y su formato
-        console.log('Campos esperados (formato):', {
-            CODIGO: 'string',
-            MARCA: 'string',
-            MEDIDA: 'string',
-            DISEÑO: 'string',
-            REMANENTE: 'number',
-            PR: 'string',
-            CARGA: 'string',
-            VELOCIDAD: 'string',
-            FECHA_FABRICACION: 'string (YYYY o código de semana/año)',
-            RQ: 'string',
-            OC: 'string',
-            PROYECTO: 'string',
-            COSTO: 'number',
-            OBSERVACION: 'string',
-            PROVEEDOR: 'string',
-            FECHA_REGISTRO: 'string (YYYY-MM-DD)',
-            FECHA_COMPRA: 'string (YYYY-MM-DD)',
-            USUARIO_SUPER: 'string',
-            TIPO_MOVIMIENTO: 'string',
-            PRESION_AIRE: 'number',
-            TORQUE_APLICADO: 'number',
-            ESTADO: 'number',
-            PLACA: 'string',
-            POSICION_NEU: 'string',
-            FECHA_ASIGNACION: 'string (YYYY-MM-DD)',
-            KILOMETRO: 'number',
-            FECHA_MOVIMIENTO: 'string (YYYY-MM-DDTHH:mm:ss)',
-        });
         // 1. Obtener datos actuales del neumático asignado
         const queryDatosActuales = `SELECT KILOMETRO, REMANENTE FROM SPEED400AT.NEU_ASIGNADO WHERE CODIGO = ? OR PLACA = ? ORDER BY FECHA_ASIGNACION DESC FETCH FIRST 1 ROWS ONLY`;
         const result = await db.query(queryDatosActuales, [datos.CODIGO, datos.PLACA]);
@@ -70,13 +39,11 @@ const crearInspeccion = async (req, res) => {
             datos.TORQUE_APLICADO, datos.ESTADO, datos.PLACA, datos.POSICION_NEU, datos.FECHA_ASIGNACION,
             datos.KILOMETRO, datos.FECHA_MOVIMIENTO
         ];
-        console.log('Valores a insertar en NEU_INSPECCION:', valoresInspeccion);
 
         // Insertar y obtener el nuevo ID_INSPECCION generado
         await db.query(queryInspeccion, valoresInspeccion);
         const idResult = await db.query('SELECT IDENTITY_VAL_LOCAL() AS ID_INSPECCION FROM SYSIBM.SYSDUMMY1');
         const nuevoIdInspeccion = idResult[0]?.ID_INSPECCION;
-        console.log('Nuevo ID_INSPECCION generado:', nuevoIdInspeccion);
 
         // Insertar en NEU_MOVIMIENTO usando el nuevo ID_INSPECCION
         // Ajustar para incluir todos los campos requeridos por la tabla
@@ -119,7 +86,6 @@ const crearInspeccion = async (req, res) => {
             datos.KILOMETRO || null,
             datos.FECHA_MOVIMIENTO || null
         ];
-        console.log('Valores a insertar en NEU_MOVIMIENTO:', valoresMovimiento);
 
         await db.query(queryMovimiento, valoresMovimiento);
 
