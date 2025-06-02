@@ -12,6 +12,7 @@ const poAsignadosRoutes = require('./routes/poAsignadosRoutes');
 const poAsignarNeumaticoRoutes = require('./routes/poAsignarNeumaticoRoutes');
 const poInicioSesionRoutes = require('./routes/poInicioSesionRoutes'); 
 const poInspeccionRoutes = require('./routes/poInspeccionRoutes'); 
+const porMovimientoRoutes = require('./routes/porMovimientoRoutes');
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerJSDoc = require('swagger-jsdoc');
@@ -75,6 +76,7 @@ app.use("/api/po-padron", padronRoutes);
 app.use("/api/vehiculo", poBuscarVehiculoRoutes);
 app.use("/api/po-asignar-neumatico", poAsignarNeumaticoRoutes);
 app.use("/api/inspeccion", poInspeccionRoutes); 
+app.use("/api/po-movimiento", porMovimientoRoutes); 
 
 
 
