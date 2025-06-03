@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { listarUltimosMovimientosPorPlaca } = require("../controllers/poMovimientoController");
+const poMovimientoController = require("../controllers/poMovimientoController");
 
 /**
  * @swagger
@@ -89,8 +89,95 @@ const { listarUltimosMovimientosPorPlaca } = require("../controllers/poMovimient
  *       500:
  *         description: Error al obtener últimos movimientos de neumáticos
  */
+router.get("/ultimos/:placa", poMovimientoController.listarUltimosMovimientosPorPlaca);
+/**
+ * @swagger
+ * /api/po-movimiento/ultimos-codigo/{codigo}:
+ *   get:
+ *     summary: Obtiene el último movimiento de cada posición donde estuvo un neumático por su código
+ *     tags:
+ *       - Movimientos
+ *     parameters:
+ *       - in: path
+ *         name: codigo
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: "Código del neumático (ejemplo: 1001)"
+ *     responses:
+ *       200:
+ *         description: Últimos movimientos del neumático por posición
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   ID_MOVIMIENTO:
+ *                     type: integer
+ *                   CODIGO:
+ *                     type: string
+ *                   MARCA:
+ *                     type: string
+ *                   MEDIDA:
+ *                     type: string
+ *                   DISEÑO:
+ *                     type: string
+ *                   REMANENTE:
+ *                     type: integer
+ *                   PR:
+ *                     type: string
+ *                   CARGA:
+ *                     type: string
+ *                   VELOCIDAD:
+ *                     type: string
+ *                   FECHA_FABRICACION:
+ *                     type: string
+ *                   RQ:
+ *                     type: string
+ *                   OC:
+ *                     type: string
+ *                   PROYECTO:
+ *                     type: string
+ *                   COSTO:
+ *                     type: number
+ *                   PROVEEDOR:
+ *                     type: string
+ *                   FECHA_REGISTRO:
+ *                     type: string
+ *                     format: date
+ *                   FECHA_COMPRA:
+ *                     type: string
+ *                     format: date
+ *                   USUARIO_SUPER:
+ *                     type: string
+ *                   TIPO_MOVIMIENTO:
+ *                     type: string
+ *                   PRESION_AIRE:
+ *                     type: number
+ *                   TORQUE_APLICADO:
+ *                     type: number
+ *                   ESTADO:
+ *                     type: integer
+ *                   PLACA:
+ *                     type: string
+ *                   POSICION_NEU:
+ *                     type: string
+ *                   FECHA_ASIGNACION:
+ *                     type: string
+ *                     format: date
+ *                   KILOMETRO:
+ *                     type: integer
+ *                   FECHA_MOVIMIENTO:
+ *                     type: string
+ *                     format: date-time
+ *       400:
+ *         description: El código es requerido
+ *       500:
+ *         description: Error al obtener últimos movimientos por código
+ */
 
-// GET /api/po-movimiento/ultimos/:placa
-router.get("/ultimos/:placa", listarUltimosMovimientosPorPlaca);
+router.get("/ultimos-codigo/:codigo", poMovimientoController.listarUltimosMovimientosPorCodigo);
 
 module.exports = router;

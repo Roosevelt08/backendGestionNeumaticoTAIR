@@ -32,6 +32,38 @@ const listarUltimosMovimientosPorPlaca = async (req, res) => {
     }
 };
 
+// Obtener el último movimiento de cada posición de un neumático por su código
+const listarUltimosMovimientosPorCodigo = async (req, res) => {
+    try {
+        const { codigo } = req.params;
+        if (!codigo || codigo.trim() === "") {
+            return res.status(400).json({ error: "El código es requerido" });
+        }
+        const codigoTrim = codigo.trim();
+        // Consulta: último movimiento por posición para el neumático
+        const query = `
+      SELECT m.*
+      FROM SPEED400AT.NEU_MOVIMIENTO m
+      INNER JOIN (
+        SELECT POSICION_NEU, MAX(FECHA_MOVIMIENTO) AS FECHA_MAX
+        FROM SPEED400AT.NEU_MOVIMIENTO
+        WHERE TRIM(CODIGO) = ?
+        GROUP BY POSICION_NEU
+      ) ult
+        ON m.POSICION_NEU = ult.POSICION_NEU
+        AND m.FECHA_MOVIMIENTO = ult.FECHA_MAX
+      WHERE TRIM(m.CODIGO) = ?
+      ORDER BY m.FECHA_MOVIMIENTO DESC
+    `;
+        const result = await db.query(query, [codigoTrim, codigoTrim]);
+        res.json(result);
+    } catch (error) {
+        console.error("Error al obtener últimos movimientos por código:", error);
+        res.status(500).json({ error: "Error al obtener últimos movimientos por código" });
+    }
+};
+
 module.exports = {
     listarUltimosMovimientosPorPlaca,
+    listarUltimosMovimientosPorCodigo,
 };
