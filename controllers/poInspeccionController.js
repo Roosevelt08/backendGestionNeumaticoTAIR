@@ -5,21 +5,24 @@ const crearInspeccion = async (req, res) => {
 
     // Validar datos recibidos antes de continuar
     try {
-        // 1. Obtener datos actuales del neumático asignado
-        const queryDatosActuales = `SELECT KILOMETRO, REMANENTE FROM SPEED400AT.NEU_ASIGNADO WHERE CODIGO = ? OR PLACA = ? ORDER BY FECHA_ASIGNACION DESC FETCH FIRST 1 ROWS ONLY`;
-        const result = await db.query(queryDatosActuales, [datos.CODIGO, datos.PLACA]);
-        if (!result || result.length === 0) {
-            return res.status(400).json({ error: "No se encontró el neumático asignado para validar (por CODIGO o PLACA)." });
+        // 1. Obtener el remanente de referencia desde PO_NEUMATICO (remanente original/recauchado)
+        const queryRemanenteReferencia = `SELECT REMANENTE FROM SPEED400AT.PO_NEUMATICO WHERE CODIGO = ? FETCH FIRST 1 ROWS ONLY`;
+        const resultRef = await db.query(queryRemanenteReferencia, [datos.CODIGO]);
+        if (!resultRef || resultRef.length === 0) {
+            return res.status(400).json({ error: "No se encontró el neumático en PO_NEUMATICO para validar el remanente." });
         }
-        const { KILOMETRO: kilometroActual, REMANENTE: remanenteOriginal } = result[0];
+        const remanenteReferencia = resultRef[0]?.REMANENTE;
 
-        // 2. Validar kilometro
-        if (typeof datos.KILOMETRO === 'number' && datos.KILOMETRO < kilometroActual) {
+        // 2. Validar kilometro (puedes mantener la lógica anterior si lo deseas)
+        const queryDatosActuales = `SELECT KILOMETRO FROM SPEED400AT.NEU_ASIGNADO WHERE CODIGO = ? OR PLACA = ? ORDER BY FECHA_ASIGNACION DESC FETCH FIRST 1 ROWS ONLY`;
+        const result = await db.query(queryDatosActuales, [datos.CODIGO, datos.PLACA]);
+        const kilometroActual = result && result.length > 0 ? result[0].KILOMETRO : null;
+        if (typeof datos.KILOMETRO === 'number' && kilometroActual !== null && datos.KILOMETRO < kilometroActual) {
             return res.status(400).json({ error: `El kilometro ingresado (${datos.KILOMETRO}) no puede ser menor al actual (${kilometroActual}).` });
         }
-        // 3. Validar remanente
-        if (typeof datos.REMANENTE === 'number' && datos.REMANENTE > remanenteOriginal) {
-            return res.status(400).json({ error: `El remanente ingresado (${datos.REMANENTE}) no puede ser mayor al original (${remanenteOriginal}).` });
+        // 3. Validar remanente contra el valor de referencia de PO_NEUMATICO
+        if (typeof datos.REMANENTE === 'number' && datos.REMANENTE > remanenteReferencia) {
+            return res.status(400).json({ error: `El remanente ingresado (${datos.REMANENTE}) no puede ser mayor al original (${remanenteReferencia}).` });
         }
 
         // Insertar en NEU_INSPECCION (sin ID_INSPECCION, autoincremental)
