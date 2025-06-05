@@ -11,10 +11,10 @@ const listarNeumaticosAsignados = async (req, res) => {
         // Hacemos el TRIM de la placa en el backend para evitar problemas con el parámetro en DB2
         const placaTrim = placa.trim();
         const query = `SELECT * FROM SPEED400AT.NEU_ASIGNADO WHERE TRIM(PLACA) = ?`;
-        console.log(`🟡 Ejecutando query directa: ${query} con placa: ${placaTrim}`);
+        //console.log(`🟡 Ejecutando query directa: ${query} con placa: ${placaTrim}`);
 
         const result = await db.query(query, [placaTrim]);
-        console.log("🔵 Resultado crudo de la consulta directa:", JSON.stringify(result, null, 2));
+        //console.log("🔵 Resultado crudo de la consulta directa:", JSON.stringify(result, null, 2));
 
         // Detectar si el resultado es un array, o si viene en result.rows o result.recordset
         let data = result;
