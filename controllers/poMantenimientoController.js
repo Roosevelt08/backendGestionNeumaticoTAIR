@@ -1,5 +1,20 @@
 const db = require("../config/db");
 
+// Función utilitaria para formatear fechas (YYYY-MM-DD)
+function formatDate(dateStr) {
+    if (!dateStr) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    return new Date(dateStr).toISOString().slice(0, 10);
+}
+// Función utilitaria para formatear timestamps (YYYY-MM-DD HH:MM:SS)
+function formatTimestamp(dateStr) {
+    if (!dateStr) return null;
+    // Si ya está en formato correcto, retorna igual
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) return dateStr;
+    // Si viene como ISO, reemplaza la T por espacio y quita los milisegundos
+    return dateStr.replace('T', ' ').substring(0, 19);
+}
+
 const registrarReubicacionNeumatico = async (req, res) => {
     try {
         const datosArray = Array.isArray(req.body) ? req.body : [req.body];
@@ -39,8 +54,8 @@ const registrarReubicacionNeumatico = async (req, res) => {
                     datos.PROYECTO,
                     datos.COSTO,
                     datos.PROVEEDOR,
-                    datos.FECHA_REGISTRO,
-                    datos.FECHA_COMPRA,
+                    formatDate(datos.FECHA_REGISTRO),
+                    formatDate(datos.FECHA_COMPRA),
                     datos.USUARIO_SUPER,
                     "REUBICADO",
                     datos.PRESION_AIRE,
@@ -51,13 +66,13 @@ const registrarReubicacionNeumatico = async (req, res) => {
                     datos.POSICION_INICIAL, // POSICION_INICIAL
                     datos.POSICION_FIN, // POSICION_FIN
                     datos.DESTINO,
-                    datos.FECHA_ASIGNACION,
+                    formatDate(datos.FECHA_ASIGNACION),
                     datos.KILOMETRO,
-                    datos.FECHA_MOVIMIENTO,
+                    formatTimestamp(datos.FECHA_MOVIMIENTO),
                     datos.OBSERVACION
                 ];
-                //console.log('queryMantenimiento:', queryMantenimiento);
-                //console.log('valoresMantenimiento (length=' + valoresMantenimiento.length + '):', valoresMantenimiento);
+                console.log('queryMantenimiento:', queryMantenimiento);
+                console.log('valoresMantenimiento (length=' + valoresMantenimiento.length + '):', valoresMantenimiento);
                 // Mostrar cada valor con su índice para depuración
                 valoresMantenimiento.forEach((v, i) => {
                     console.log(`  [${i}] (${typeof v}):`, v);
@@ -65,8 +80,16 @@ const registrarReubicacionNeumatico = async (req, res) => {
                 await db.query(queryMantenimiento, valoresMantenimiento);
 
                 // Formatear FECHA_ASIGNACION para que sea solo fecha (YYYY-MM-DD)
-                const fechaAsignacion = datos.FECHA_ASIGNACION ? datos.FECHA_ASIGNACION.split('T')[0] : null;
+                const fechaAsignacion = formatDate(datos.FECHA_ASIGNACION);
 
+                // Validar duplicidad antes de insertar en NEU_MOVIMIENTO
+                // (Desactivado: ahora permite insertar aunque exista la misma combinación CODIGO y FECHA_ASIGNACION)
+                // const checkQuery = `SELECT 1 FROM SPEED400AT.NEU_MOVIMIENTO WHERE CODIGO = ? AND FECHA_ASIGNACION = ?`;
+                // const checkResult = await db.query(checkQuery, [datos.CODIGO, fechaAsignacion]);
+                // if (checkResult.length > 0) {
+                //     console.error('Registro duplicado detectado en NEU_MOVIMIENTO para CODIGO y FECHA_ASIGNACION:', datos.CODIGO, fechaAsignacion);
+                //     throw new Error('Ya existe un movimiento para este neumático y fecha de asignación.');
+                // }
                 const valoresMovimiento = [
                     datos.CODIGO || null,
                     datos.MARCA || null,
@@ -82,24 +105,25 @@ const registrarReubicacionNeumatico = async (req, res) => {
                     datos.PROYECTO || null,
                     datos.COSTO || null,
                     datos.PROVEEDOR || null,
-                    datos.FECHA_REGISTRO || null,
-                    datos.FECHA_COMPRA || null,
+                    formatDate(datos.FECHA_REGISTRO),
+                    formatDate(datos.FECHA_COMPRA),
                     datos.USUARIO_SUPER || null,
                     "REUBICADO",
                     datos.PRESION_AIRE || null,
                     datos.TORQUE_APLICADO || null,
                     datos.ESTADO || null,
                     datos.PLACA || null,
-                    datos.POSICION_FIN || null, // POSICION_NEU final (POSICION_FIN)
+                    datos.POSICION_FIN || null, 
                     fechaAsignacion,
                     datos.KILOMETRO || null,
-                    datos.FECHA_MOVIMIENTO || null,
-                    null // ID_ASIGNADO debe ser null explícitamente
+                    formatTimestamp(datos.FECHA_MOVIMIENTO) || null,
+                    null 
                 ];
-                //console.log('valoresMovimiento:', valoresMovimiento);
+                console.log('valoresMovimiento:', valoresMovimiento);
                 await db.query(queryMovimiento, valoresMovimiento);
             } catch (e) {
-                //console.error('Error en registro individual:', e);
+                // Mostrar el error exacto de la base de datos en consola para depuración
+                console.error('Error SQL en registro individual:', e);
                 throw e;
             }
         }
