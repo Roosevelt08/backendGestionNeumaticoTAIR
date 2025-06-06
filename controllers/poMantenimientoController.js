@@ -133,4 +133,77 @@ const registrarReubicacionNeumatico = async (req, res) => {
     }
 };
 
-module.exports = { registrarReubicacionNeumatico };
+const registrarDesasignacionNeumatico = async (req, res) => {
+    try {
+        const datosArray = Array.isArray(req.body) ? req.body : [req.body];
+        for (const datos of datosArray) {
+            // Determinar la tabla según el tipo de movimiento
+            let tabla = null;
+            if (datos.TIPO_MOVIMIENTO === 'BAJA DEFINITIVA') {
+                tabla = 'SPEED400AT.NEU_ELIMINADO';
+            } else if (datos.TIPO_MOVIMIENTO === 'RECUPERADO') {
+                tabla = 'SPEED400AT.NEU_RECUPERADO';
+            } else {
+                console.error('TIPO_MOVIMIENTO inválido:', datos.TIPO_MOVIMIENTO);
+                return res.status(400).json({ error: 'TIPO_MOVIMIENTO inválido. Debe ser BAJA DEFINITIVA o RECUPERADO.' });
+            }
+            // Log de los valores a insertar
+            console.log('Insertando en', tabla);
+            console.log('Valores recibidos:', datos);
+            const query = `
+                INSERT INTO ${tabla} (
+                    CODIGO, MARCA, MEDIDA, DISEÑO, REMANENTE, PR, CARGA, VELOCIDAD,
+                    FECHA_FABRICACION, RQ, OC, PROYECTO, COSTO, PROVEEDOR, FECHA_REGISTRO, FECHA_COMPRA,
+                    USUARIO_SUPER, TIPO_MOVIMIENTO, PRESION_AIRE, TORQUE_APLICADO, ESTADO, PLACA, POSICION_NEU,
+                    DESTINO, FECHA_ASIGNACION, KILOMETRO, FECHA_MOVIMIENTO, OBSERVACION
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+            const valores = [
+                datos.CODIGO,
+                datos.MARCA,
+                datos.MEDIDA,
+                datos.DISEÑO,
+                datos.REMANENTE,
+                datos.PR,
+                datos.CARGA,
+                datos.VELOCIDAD,
+                datos.FECHA_FABRICACION,
+                datos.RQ,
+                datos.OC,
+                datos.PROYECTO,
+                datos.COSTO,
+                datos.PROVEEDOR,
+                formatDate(datos.FECHA_REGISTRO),
+                formatDate(datos.FECHA_COMPRA),
+                datos.USUARIO_SUPER,
+                datos.TIPO_MOVIMIENTO,
+                datos.PRESION_AIRE,
+                datos.TORQUE_APLICADO,
+                datos.ESTADO,
+                datos.PLACA,
+                datos.POSICION_NEU,
+                datos.DESTINO,
+                formatDate(datos.FECHA_ASIGNACION),
+                datos.KILOMETRO,
+                formatTimestamp(datos.FECHA_MOVIMIENTO),
+                datos.OBSERVACION
+            ];
+            // Log de los valores finales a insertar
+            valores.forEach((v, i) => {
+                console.log(`  [${i}] (${typeof v}):`, v);  
+            });
+            try {
+                await db.query(query, valores);
+            } catch (e) {
+                console.error('Error SQL al insertar en', tabla, ':', e);
+                throw e;
+            }
+        }
+        res.status(201).json({ mensaje: `Desasignación de ${datosArray.length} neumático(s) registrada correctamente` });
+    } catch (error) {
+        console.error('Error general en registrarDesasignacionNeumatico:', error);
+        res.status(500).json({ error: 'Error al registrar la desasignación de neumático(s)', detalle: error.message });
+    }
+};
+
+module.exports = { registrarReubicacionNeumatico, registrarDesasignacionNeumatico };
