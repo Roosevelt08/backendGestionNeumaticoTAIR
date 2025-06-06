@@ -194,6 +194,48 @@ const registrarDesasignacionNeumatico = async (req, res) => {
             });
             try {
                 await db.query(query, valores);
+                // --- NUEVO: Insertar también en NEU_MOVIMIENTO ---
+                const queryMovimiento = `
+                    INSERT INTO SPEED400AT.NEU_MOVIMIENTO (
+                        CODIGO, MARCA, MEDIDA, DISEÑO, REMANENTE, PR, CARGA, VELOCIDAD,
+                        FECHA_FABRICACION, RQ, OC, PROYECTO, COSTO, PROVEEDOR, FECHA_REGISTRO, FECHA_COMPRA,
+                        USUARIO_SUPER, TIPO_MOVIMIENTO, PRESION_AIRE, TORQUE_APLICADO, ESTADO, PLACA, POSICION_NEU,
+                        FECHA_ASIGNACION, KILOMETRO, FECHA_MOVIMIENTO, ID_ASIGNADO
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    )
+                `;
+                const valoresMovimiento = [
+                    datos.CODIGO || null,
+                    datos.MARCA || null,
+                    datos.MEDIDA || null,
+                    datos.DISEÑO || null,
+                    datos.REMANENTE || null,
+                    datos.PR || null,
+                    datos.CARGA || null,
+                    datos.VELOCIDAD || null,
+                    datos.FECHA_FABRICACION || null,
+                    datos.RQ || null,
+                    datos.OC || null,
+                    datos.PROYECTO || null,
+                    datos.COSTO || null,
+                    datos.PROVEEDOR || null,
+                    formatDate(datos.FECHA_REGISTRO),
+                    formatDate(datos.FECHA_COMPRA),
+                    datos.USUARIO_SUPER || null,
+                    datos.TIPO_MOVIMIENTO,
+                    datos.PRESION_AIRE || null,
+                    datos.TORQUE_APLICADO || null,
+                    datos.ESTADO || null,
+                    datos.PLACA || null,
+                    datos.POSICION_NEU || null,
+                    formatDate(datos.FECHA_ASIGNACION),
+                    datos.KILOMETRO || null,
+                    formatTimestamp(datos.FECHA_MOVIMIENTO) || null,
+                    datos.ID_ASIGNADO || null
+                ];
+                await db.query(queryMovimiento, valoresMovimiento);
+                // --- FIN NUEVO ---
             } catch (e) {
                 console.error('Error SQL al insertar en', tabla, ':', e);
                 throw e;
