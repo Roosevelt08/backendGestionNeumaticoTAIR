@@ -1,5 +1,17 @@
 const db = require("../config/db");
 
+// Funciones para formatear fechas y timestamps
+function formatDate(dateStr) {
+    if (!dateStr) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    return new Date(dateStr).toISOString().slice(0, 10);
+}
+function formatTimestamp(dateStr) {
+    if (!dateStr) return null;
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) return dateStr;
+    return dateStr.replace('T', ' ').substring(0, 19);
+}
+
 const crearInspeccion = async (req, res) => {
     const datos = req.body;
 
@@ -35,12 +47,33 @@ const crearInspeccion = async (req, res) => {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const valoresInspeccion = [
-            datos.CODIGO, datos.MARCA, datos.MEDIDA, datos.DISEÑO, datos.REMANENTE,
-            datos.PR, datos.CARGA, datos.VELOCIDAD, datos.FECHA_FABRICACION, datos.RQ, datos.OC,
-            datos.PROYECTO, datos.COSTO, datos.OBSERVACION, datos.PROVEEDOR, datos.FECHA_REGISTRO,
-            datos.FECHA_COMPRA, datos.USUARIO_SUPER, datos.TIPO_MOVIMIENTO, datos.PRESION_AIRE,
-            datos.TORQUE_APLICADO, datos.ESTADO, datos.PLACA, datos.POSICION_NEU, datos.FECHA_ASIGNACION,
-            datos.KILOMETRO, datos.FECHA_MOVIMIENTO
+            datos.CODIGO,
+            datos.MARCA,
+            datos.MEDIDA,
+            datos.DISEÑO,
+            datos.REMANENTE,
+            datos.PR,
+            datos.CARGA,
+            datos.VELOCIDAD,
+            datos.FECHA_FABRICACION,
+            datos.RQ,
+            datos.OC,
+            datos.PROYECTO,
+            datos.COSTO,
+            datos.OBSERVACION,
+            datos.PROVEEDOR,
+            formatDate(datos.FECHA_REGISTRO),
+            formatDate(datos.FECHA_COMPRA),
+            datos.USUARIO_SUPER,
+            datos.TIPO_MOVIMIENTO,
+            datos.PRESION_AIRE,
+            datos.TORQUE_APLICADO,
+            datos.ESTADO,
+            datos.PLACA,
+            datos.POSICION_NEU,
+            formatDate(datos.FECHA_ASIGNACION),
+            datos.KILOMETRO,
+            formatTimestamp(datos.FECHA_MOVIMIENTO)
         ];
 
         // Insertar y obtener el nuevo ID_INSPECCION generado
@@ -76,8 +109,8 @@ const crearInspeccion = async (req, res) => {
             datos.PROYECTO || null,
             datos.COSTO || null,
             datos.PROVEEDOR || null,
-            datos.FECHA_REGISTRO || null,
-            datos.FECHA_COMPRA || null,
+            formatDate(datos.FECHA_REGISTRO),
+            formatDate(datos.FECHA_COMPRA),
             datos.USUARIO_SUPER || null,
             datos.TIPO_MOVIMIENTO || null,
             datos.PRESION_AIRE || null,
@@ -85,9 +118,9 @@ const crearInspeccion = async (req, res) => {
             datos.ESTADO || null,
             datos.PLACA || null,
             datos.POSICION_NEU || null,
-            datos.FECHA_ASIGNACION || null,
+            formatDate(datos.FECHA_ASIGNACION),
             datos.KILOMETRO || null,
-            datos.FECHA_MOVIMIENTO || null
+            formatTimestamp(datos.FECHA_MOVIMIENTO)
         ];
 
         await db.query(queryMovimiento, valoresMovimiento);

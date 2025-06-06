@@ -71,12 +71,12 @@ const registrarReubicacionNeumatico = async (req, res) => {
                     formatTimestamp(datos.FECHA_MOVIMIENTO),
                     datos.OBSERVACION
                 ];
-                console.log('queryMantenimiento:', queryMantenimiento);
-                console.log('valoresMantenimiento (length=' + valoresMantenimiento.length + '):', valoresMantenimiento);
+                //console.log('queryMantenimiento:', queryMantenimiento);
+                //console.log('valoresMantenimiento (length=' + valoresMantenimiento.length + '):', valoresMantenimiento);
                 // Mostrar cada valor con su índice para depuración
-                valoresMantenimiento.forEach((v, i) => {
-                    console.log(`  [${i}] (${typeof v}):`, v);
-                });
+                // valoresMantenimiento.forEach((v, i) => {
+                //     console.log(`  [${i}] (${typeof v}):`, v);
+                // });
                 await db.query(queryMantenimiento, valoresMantenimiento);
 
                 // Formatear FECHA_ASIGNACION para que sea solo fecha (YYYY-MM-DD)
@@ -119,7 +119,7 @@ const registrarReubicacionNeumatico = async (req, res) => {
                     formatTimestamp(datos.FECHA_MOVIMIENTO) || null,
                     null 
                 ];
-                console.log('valoresMovimiento:', valoresMovimiento);
+                //console.log('valoresMovimiento:', valoresMovimiento);
                 await db.query(queryMovimiento, valoresMovimiento);
             } catch (e) {
                 // Mostrar el error exacto de la base de datos en consola para depuración
