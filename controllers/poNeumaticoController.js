@@ -46,7 +46,7 @@ const actualizarNeumatico = async (req, res) => {
     const nuevosDatos = req.body;
 
     try {
-        console.log(`Actualizando neumático con código: ${codigo}`);
+        //console.log(`Actualizando neumático con código: ${codigo}`);
 
         // Convertir codigo a número (MUY IMPORTANTE)
         const codigoNumerico = parseInt(codigo, 10);
@@ -61,13 +61,13 @@ const actualizarNeumatico = async (req, res) => {
         );
 
         if (!result || result.length === 0) {
-            console.log(`Neumático con código ${codigo} no encontrado`);
+            //console.log(`Neumático con código ${codigo} no encontrado`);
             return res.status(404).json({ error: 'Neumático no encontrado' });
         }
 
         const actual = result[0];
-        console.log('Datos actuales:', actual);
-        console.log('Nuevos datos:', nuevosDatos);
+        //console.log('Datos actuales:', actual);
+        //console.log('Nuevos datos:', nuevosDatos);
 
         // 2. Mantener los valores actuales si ya existen, usar los nuevos si están en la request
         const actualizado = {
@@ -90,7 +90,7 @@ const actualizarNeumatico = async (req, res) => {
             KILOMETRAJE: nuevosDatos.KILOMETRAJE !== undefined ? nuevosDatos.KILOMETRAJE : actual.KILOMETRAJE,  // Añadido KILOMETRAJE
         };
 
-        console.log('Datos actualizados:', actualizado);
+        //console.log('Datos actualizados:', actualizado);
 
         // 3. Ejecutar la actualización
         const query = `
@@ -109,8 +109,8 @@ const actualizarNeumatico = async (req, res) => {
             codigoNumerico // Usar el código numérico
         ];
 
-        console.log('Query:', query);
-        console.log('Params:', params);
+        // console.log('Query:', query);
+        // console.log('Params:', params);
 
         await db.query(query, params);
 
@@ -158,7 +158,7 @@ const contarProyectosNeumatico = async (req, res) => {
             'SELECT COUNT(DISTINCT PROYECTO) AS cantidad FROM SPEED400AT.PO_NEUMATICO'
         );
         // Imprime el resultado para ver su estructura
-        console.log('Resultado de contar proyectos:', result);
+        //console.log('Resultado de contar proyectos:', result);
 
         // Si result es un array de objetos
         const cantidad = Array.isArray(result) && result.length > 0

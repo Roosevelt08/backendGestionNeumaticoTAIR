@@ -148,8 +148,8 @@ const registrarDesasignacionNeumatico = async (req, res) => {
                 return res.status(400).json({ error: 'TIPO_MOVIMIENTO inválido. Debe ser BAJA DEFINITIVA o RECUPERADO.' });
             }
             // Log de los valores a insertar
-            console.log('Insertando en', tabla);
-            console.log('Valores recibidos:', datos);
+            // console.log('Insertando en', tabla);
+            // console.log('Valores recibidos:', datos);
             const query = `
                 INSERT INTO ${tabla} (
                     CODIGO, MARCA, MEDIDA, DISEÑO, REMANENTE, PR, CARGA, VELOCIDAD,
@@ -189,9 +189,9 @@ const registrarDesasignacionNeumatico = async (req, res) => {
                 datos.OBSERVACION
             ];
             // Log de los valores finales a insertar
-            valores.forEach((v, i) => {
-                console.log(`  [${i}] (${typeof v}):`, v);  
-            });
+            // valores.forEach((v, i) => {
+            //     console.log(`  [${i}] (${typeof v}):`, v);  
+            // });
             try {
                 await db.query(query, valores);
                 // --- NUEVO: Insertar también en NEU_MOVIMIENTO ---

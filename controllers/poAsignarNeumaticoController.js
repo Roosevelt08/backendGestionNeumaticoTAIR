@@ -20,16 +20,16 @@ const asignarNeumatico = async (req, res) => {
         // Tomar el usuario autenticado de la sesión
         const UsuarioCrea = req.session.user.usuario.trim().toUpperCase();
 
-        console.log("📥 Datos recibidos:", {
-            CodigoNeumatico,
-            Remanente,
-            PresionAire,
-            TorqueAplicado,
-            Placa,
-            Posicion,
-            Odometro,
-            UsuarioCrea
-        });
+        // console.log("📥 Datos recibidos:", {
+        //     CodigoNeumatico,
+        //     Remanente,
+        //     PresionAire,
+        //     TorqueAplicado,
+        //     Placa,
+        //     Posicion,
+        //     Odometro,
+        //     UsuarioCrea
+        // });
 
         // Validación básica
         if (!CodigoNeumatico || !Remanente || !PresionAire || !TorqueAplicado || !Placa || !Posicion || !Odometro) {
@@ -50,10 +50,10 @@ const asignarNeumatico = async (req, res) => {
             )
         `;
 
-        console.log("🧪 Ejecutando query:\n", query);
+        //console.log("🧪 Ejecutando query:\n", query);
 
         const result = await db.query(query);
-        console.log("✅ Resultado de DB:", result);
+        //console.log("✅ Resultado de DB:", result);
 
         res.status(200).json({ mensaje: "Neumático asignado correctamente." });
 
