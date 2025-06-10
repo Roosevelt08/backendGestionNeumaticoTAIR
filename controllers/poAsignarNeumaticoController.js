@@ -13,28 +13,23 @@ const asignarNeumatico = async (req, res) => {
             TorqueAplicado, // P_TORQUE_APLICADO
             Placa,          // P_PLACA
             Posicion,       // P_POSICION
-            Odometro        // P_KILOMETRO
+            Odometro,       // P_KILOMETRO
+            FechaRegistro   // P_FECHA_REGISTRO (nuevo)
             // UsuarioCrea se tomará de la sesión
         } = req.body;
 
         // Tomar el usuario autenticado de la sesión
         const UsuarioCrea = req.session.user.usuario.trim().toUpperCase();
 
-        // console.log("📥 Datos recibidos:", {
-        //     CodigoNeumatico,
-        //     Remanente,
-        //     PresionAire,
-        //     TorqueAplicado,
-        //     Placa,
-        //     Posicion,
-        //     Odometro,
-        //     UsuarioCrea
-        // });
-
         // Validación básica
-        if (!CodigoNeumatico || !Remanente || !PresionAire || !TorqueAplicado || !Placa || !Posicion || !Odometro) {
+        if (!CodigoNeumatico || !Remanente || !PresionAire || !TorqueAplicado || !Placa || !Posicion || !Odometro || !FechaRegistro) {
             console.warn("⚠️ Faltan campos requeridos.");
-            return res.status(400).json({ error: "Faltan campos obligatorios." });
+            return res.status(400).json({ error: "Faltan campos obligatorios (incluya FechaRegistro en formato YYYY-MM-DD)." });
+        }
+
+        // Validar formato de fecha (YYYY-MM-DD)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(FechaRegistro)) {
+            return res.status(400).json({ error: "El campo FechaRegistro debe tener formato YYYY-MM-DD." });
         }
 
         const query = `
@@ -46,7 +41,8 @@ const asignarNeumatico = async (req, res) => {
                 '${Placa}',
                 '${Posicion}',
                 ${Odometro},
-                '${UsuarioCrea}'
+                '${UsuarioCrea}',
+                DATE('${FechaRegistro}')
             )
         `;
 
