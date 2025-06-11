@@ -44,6 +44,7 @@ const buscarVehiculoPorPlaca = async (req, res) => {
            )
       WHERE
         TRIM(V.NUMPLA) = ?
+        
         AND (
           SUBSTR(TRIM(SUP.NOM), 1, 1)
           || SUBSTR(
