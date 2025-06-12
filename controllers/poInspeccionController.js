@@ -9,7 +9,18 @@ function formatDate(dateStr) {
 function formatTimestamp(dateStr) {
     if (!dateStr) return null;
     if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) return dateStr;
-    return dateStr.replace('T', ' ').substring(0, 19);
+    // Si es un string tipo ISO, convertir a hora local
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    // Obtener componentes de la hora local
+    const pad = n => n.toString().padStart(2, '0');
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    const seconds = pad(d.getSeconds());
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 const crearInspeccion = async (req, res) => {
