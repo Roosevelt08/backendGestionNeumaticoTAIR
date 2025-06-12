@@ -3,16 +3,23 @@ const db = require("../config/db");
 // Función utilitaria para formatear fechas (YYYY-MM-DD)
 function formatDate(dateStr) {
     if (!dateStr) return null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-    return new Date(dateStr).toISOString().slice(0, 10);
+    if (typeof dateStr === 'string' && dateStr.length >= 10) {
+        // Si ya está en formato YYYY-MM-DD, o viene como YYYY-MM-DDTHH:mm:ss, extrae solo la fecha
+        return dateStr.slice(0, 10);
+    }
+    return null;
 }
 // Función utilitaria para formatear timestamps (YYYY-MM-DD HH:MM:SS)
 function formatTimestamp(dateStr) {
     if (!dateStr) return null;
     // Si ya está en formato correcto, retorna igual
     if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) return dateStr;
-    // Si viene como ISO, reemplaza la T por espacio y quita los milisegundos
-    return dateStr.replace('T', ' ').substring(0, 19);
+    // Si viene como ISO (YYYY-MM-DDTHH:mm:ss), reemplaza la T por espacio y recorta los milisegundos
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(dateStr)) {
+        return dateStr.replace('T', ' ').substring(0, 19);
+    }
+    // Si viene en otro formato, retorna igual (o podrías lanzar un warning)
+    return dateStr;
 }
 
 const registrarReubicacionNeumatico = async (req, res) => {
