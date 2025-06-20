@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { crearInspeccion } = require("../controllers/poInspeccionController");
+const poInspeccionController = require("../controllers/poInspeccionController");
 
 /**
  * @swagger
@@ -95,6 +95,66 @@ const { crearInspeccion } = require("../controllers/poInspeccionController");
  *         KILOMETRO: { type: integer }
  *         FECHA_MOVIMIENTO: { type: string, format: date-time }
  */
-router.post("/", crearInspeccion);
+router.post("/", poInspeccionController.crearInspeccion);
+
+/**
+ * @swagger
+ * /api/inspeccion/existe:
+ *   get:
+ *     summary: Consulta si existe una inspección para un neumático y placa en una fecha específica
+ *     description: >-
+ *       Devuelve si existe una inspección para el neumático y placa en la fecha dada (YYYY-MM-DD). Si no existe, devuelve la fecha de la última inspección registrada.
+ *     tags:
+ *       - Inspección
+ *     parameters:
+ *       - in: query
+ *         name: codigo
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Código del neumático
+ *       - in: query
+ *         name: placa
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Placa del vehículo
+ *       - in: query
+ *         name: fecha
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha a consultar (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Resultado de la consulta
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 existe:
+ *                   type: boolean
+ *                   description: Indica si existe inspección para la fecha dada
+ *                 fecha:
+ *                   type: string
+ *                   format: date
+ *                   description: Fecha de la inspección encontrada (si existe)
+ *                 ultima:
+ *                   type: string
+ *                   format: date
+ *                   description: Fecha de la última inspección registrada (si no existe para la fecha dada)
+ *             examples:
+ *               existe:
+ *                 value: { "existe": true, "fecha": "2025-06-12" }
+ *               noExiste:
+ *                 value: { "existe": false, "ultima": "2025-06-10" }
+ *       400:
+ *         description: Faltan parámetros requeridos
+ *       500:
+ *         description: Error interno al consultar inspección
+ */
+router.get("/existe", poInspeccionController.existeInspeccionHoy);
 
 module.exports = router;

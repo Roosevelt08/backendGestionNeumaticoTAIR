@@ -42,7 +42,8 @@ const cargarPadronDesdeExcel = async (req, res) => {
             PROYECTO: encabezados.find(col => limpiarEncabezado(col).includes("PROYECTO")),
             COSTO: encabezados.find(col => limpiarEncabezado(col).includes("COSTO")),
             PROVEEDOR: encabezados.find(col => limpiarEncabezado(col).includes("PROVEEDOR")),
-            FECHA_COMPRA: encabezados.find(col => limpiarEncabezado(col).includes("FECHA COMPRA"))
+            FECHA_COMPRA: encabezados.find(col => limpiarEncabezado(col).includes("FECHA COMPRA")),
+            FECHA_REGISTRO: encabezados.find(col => limpiarEncabezado(col).includes("FECHA ENVIO"))
         };
 
         // Si no hay ninguna columna reconocida, rechazar
@@ -77,7 +78,7 @@ const cargarPadronDesdeExcel = async (req, res) => {
                 erroresFila.push('Marca no especificada.');
             }
 
-            let medida = columnas.MEDIDA ? (fila[columnas.MEDIDA] || '').trim() : null;
+            let medida = columnas.MEDIDA ? (fila[columnas.MEDIDA] || '').trim().substring(0, 20) : null;
             if (medida) {
                 const existeMedida = await db.query('SELECT 1 FROM SPEED400AT.NEU_MEDIDA WHERE MEDIDA = ?', [medida]);
                 if (!existeMedida || existeMedida.length === 0) {
@@ -134,21 +135,43 @@ const cargarPadronDesdeExcel = async (req, res) => {
                     if (resDiseno && resDiseno.length > 0) idDiseno = resDiseno[0].ID_DISENO;
                 }
 
+                // Calcular FECHA_REGISTRO: si viene en el Excel, úsala; si no, usa la fecha actual
+                const hoy = new Date().toISOString().split('T')[0];
+                let fechaRegistro = hoy;
+                if (columnas.FECHA_REGISTRO && fila[columnas.FECHA_REGISTRO]) {
+                    const valor = fila[columnas.FECHA_REGISTRO];
+                    if (typeof valor === 'number') {
+                        // Fecha Excel numérica
+                        const fecha = new Date(Date.UTC(1899, 11, 30) + valor * 86400000);
+                        fechaRegistro = fecha.toISOString().split('T')[0];
+                    } else if (typeof valor === 'string') {
+                        const v = valor.trim();
+                        if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) {
+                            const [dia, mes, anio] = v.split('/');
+                            fechaRegistro = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+                        } else {
+                            const d = new Date(v);
+                            fechaRegistro = isNaN(d) ? hoy : d.toISOString().split('T')[0];
+                        }
+                    }
+                }
+
                 const filaLimpia = {
                     CODIGO: columnas.CODIGO ? (fila[columnas.CODIGO] || '').toString().trim() : null,
                     MARCA: columnas.MARCA ? (fila[columnas.MARCA] || '').trim() : null,
-                    MEDIDA: columnas.MEDIDA ? (fila[columnas.MEDIDA] || '').trim() : null,
+                    MEDIDA: columnas.MEDIDA ? (fila[columnas.MEDIDA] || '').trim().substring(0, 20) : null,
                     DISENO: columnas.DISENO ? (fila[columnas.DISENO] || '').trim() : null,
-                    REMANENTE: columnas.REMANENTE ? (parseInt(fila[columnas.REMANENTE]) || 0) : null,
+                    REMANENTE: columnas.REMANENTE ? (parseFloat(fila[columnas.REMANENTE]) || 0) : null,
                     PR: columnas.PR ? (fila[columnas.PR] || '').toString().trim() : null,
                     CARGA: columnas.CARGA ? (fila[columnas.CARGA] || '').toString().trim() : null,
                     VELOCIDAD: columnas.VELOCIDAD ? (fila[columnas.VELOCIDAD] || '').trim() : null,
-                    FECHA_FABRICACION_COD: columnas.FECHA_FABRICACION_COD ? (fila[columnas.FECHA_FABRICACION_COD] || '').toString().trim() : null,
-                    RQ: columnas.RQ ? (fila[columnas.RQ] || '').toString().trim() : null,
-                    OC: columnas.OC ? (fila[columnas.OC] || '').toString().trim() : null,
-                    PROYECTO: columnas.PROYECTO ? (fila[columnas.PROYECTO] || '').trim() : null,
+                    FECHA_FABRICACION_COD: columnas.FECHA_FABRICACION_COD ? (fila[columnas.FECHA_FABRICACION_COD] || '').toString().trim().substring(0, 4) : null,
+                    RQ: columnas.RQ ? (fila[columnas.RQ] || '').toString().trim().substring(0, 10) : null,
+                    OC: columnas.OC ? (fila[columnas.OC] || '').toString().trim().substring(0, 10) : null,
+                    PROYECTO: columnas.PROYECTO ? (fila[columnas.PROYECTO] || '').trim().substring(0, 100) : null,
                     COSTO: columnas.COSTO ? (parseFloat(fila[columnas.COSTO]) || 0) : null,
                     PROVEEDOR: proveedorNombre, // Usar el nombre del proveedor
+                    FECHA_REGISTRO: fechaRegistro,
                     FECHA_COMPRA: columnas.FECHA_COMPRA && fila[columnas.FECHA_COMPRA]
                         ? (() => {
                             const valor = fila[columnas.FECHA_COMPRA];
@@ -174,18 +197,37 @@ const cargarPadronDesdeExcel = async (req, res) => {
                     ID_DISENO: idDiseno
                 };
 
-                const query = `CALL SPEED400AT.SP_INSERTAR_PO_NEUMATICO(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                const query = `CALL SPEED400AT.SP_INSERTAR_PO_NEUMATICO(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
                 const params = [
                     filaLimpia.CODIGO, filaLimpia.MARCA, filaLimpia.MEDIDA, filaLimpia.DISENO,
                     filaLimpia.REMANENTE, filaLimpia.PR, filaLimpia.CARGA, filaLimpia.VELOCIDAD,
                     filaLimpia.FECHA_FABRICACION_COD, filaLimpia.RQ, filaLimpia.OC, filaLimpia.PROYECTO,
-                    filaLimpia.COSTO, filaLimpia.PROVEEDOR, filaLimpia.FECHA_COMPRA
+                    filaLimpia.COSTO, filaLimpia.PROVEEDOR, filaLimpia.FECHA_REGISTRO, filaLimpia.FECHA_COMPRA
                 ];
-                //console.log("🧪 Ejecutando query:", query);
-                //console.log("🧪 Con parámetros:", params);
+                console.log("🧪 Ejecutando query:", query);
+                console.log("🧪 Con parámetros:", params);
+                console.log("Valores a insertar:", {
+                    CODIGO: filaLimpia.CODIGO,
+                    MARCA: filaLimpia.MARCA,
+                    MEDIDA: filaLimpia.MEDIDA,
+                    DISENO: filaLimpia.DISENO,
+                    REMANENTE: filaLimpia.REMANENTE,
+                    PR: filaLimpia.PR,
+                    CARGA: filaLimpia.CARGA,
+                    VELOCIDAD: filaLimpia.VELOCIDAD,
+                    FECHA_FABRICACION_COD: filaLimpia.FECHA_FABRICACION_COD,
+                    RQ: filaLimpia.RQ,
+                    OC: filaLimpia.OC,
+                    PROYECTO: filaLimpia.PROYECTO,
+                    COSTO: filaLimpia.COSTO,
+                    PROVEEDOR: filaLimpia.PROVEEDOR,
+                    FECHA_REGISTRO: filaLimpia.FECHA_REGISTRO,
+                    FECHA_COMPRA: filaLimpia.FECHA_COMPRA
+                });
                 await db.query(query, params);
                 insertados++;
             } catch (error) {
+                console.log("Error al ejecutar query:", error);
                 errores.push({ fila: codigo || '', mensaje: error.message || "Error desconocido" });
             }
         }

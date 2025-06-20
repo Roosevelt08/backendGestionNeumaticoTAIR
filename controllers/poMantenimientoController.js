@@ -69,8 +69,10 @@ const registrarReubicacionNeumatico = async (req, res) => {
                     datos.TORQUE_APLICADO,
                     datos.ESTADO,
                     datos.PLACA,
-                    datos.POSICION_NEU, // POSICION_NEU
-                    datos.POSICION_INICIAL, // POSICION_INICIAL
+                    // Usar POSICION_FIN como POSICION_NEU para reflejar la posición final real
+                    datos.POSICION_FIN, // POSICION_NEU
+                    // Usar POSICION_INICIAL si existe, si no, dejar null
+                    datos.POSICION_INICIAL || null, // POSICION_INICIAL
                     datos.POSICION_FIN, // POSICION_FIN
                     datos.DESTINO,
                     formatDate(datos.FECHA_ASIGNACION),

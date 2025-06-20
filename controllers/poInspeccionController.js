@@ -139,6 +139,42 @@ const crearInspeccion = async (req, res) => {
     }
 };
 
+// Consulta si existe una inspección para un neumático y placa en una fecha específica
+const existeInspeccionHoy = async (req, res) => {
+    try {
+        const { codigo, placa, fecha } = req.query;
+        if (!codigo || !placa || !fecha) {
+            return res.status(400).json({ error: "Faltan parámetros: codigo, placa y fecha son requeridos" });
+        }
+        // Buscar inspección para ese neumático, placa y fecha exacta
+        const query = `
+            SELECT FECHA_REGISTRO
+            FROM SPEED400AT.NEU_INSPECCION
+            WHERE CODIGO = ? AND PLACA = ? AND FECHA_REGISTRO = ?
+            ORDER BY FECHA_REGISTRO DESC
+            FETCH FIRST 1 ROWS ONLY
+        `;
+        const result = await db.query(query, [codigo, placa, fecha]);
+        if (result.length > 0) {
+            return res.json({ existe: true, fecha: result[0].FECHA_REGISTRO });
+        } else {
+            // Buscar la última inspección para mostrar la fecha
+            const lastQuery = `
+                SELECT FECHA_REGISTRO
+                FROM SPEED400AT.NEU_INSPECCION
+                WHERE CODIGO = ? AND PLACA = ?
+                ORDER BY FECHA_REGISTRO DESC
+                FETCH FIRST 1 ROW ONLY
+            `;
+            const lastResult = await db.query(lastQuery, [codigo, placa]);
+            return res.json({ existe: false, ultima: lastResult[0]?.FECHA_REGISTRO || null });
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Error al consultar inspección", detalle: error.message });
+    }
+};
+
 module.exports = {
     crearInspeccion,
+    existeInspeccionHoy,
 };
