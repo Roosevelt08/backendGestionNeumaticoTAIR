@@ -5,6 +5,8 @@ const asignarNeumatico = async (req, res) => {
     if (!req.session.user || !req.session.user.usuario) {
         return res.status(401).json({ mensaje: "No autenticado" });
     }
+    // Log para depuración: mostrar el payload recibido
+    console.log('Payload recibido en asignarNeumatico:', JSON.stringify(req.body, null, 2));
     // Permitir objeto o array
     const data = Array.isArray(req.body) ? req.body : [req.body];
     const UsuarioCrea = req.session.user.usuario.trim().toUpperCase();
@@ -28,7 +30,7 @@ const asignarNeumatico = async (req, res) => {
             });
             continue;
         }
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(FechaRegistro)) {
+        if (!/^[\d]{4}-[\d]{2}-[\d]{2}$/.test(FechaRegistro)) {
             resultados.push({
                 index: i,
                 error: "El campo FechaRegistro debe tener formato YYYY-MM-DD."

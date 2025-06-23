@@ -43,7 +43,7 @@ const cargarPadronDesdeExcel = async (req, res) => {
             COSTO: encabezados.find(col => limpiarEncabezado(col).includes("COSTO")),
             PROVEEDOR: encabezados.find(col => limpiarEncabezado(col).includes("PROVEEDOR")),
             FECHA_COMPRA: encabezados.find(col => limpiarEncabezado(col).includes("FECHA COMPRA")),
-            FECHA_REGISTRO: encabezados.find(col => limpiarEncabezado(col).includes("FECHA ENVIO"))
+            FECHA_REGISTRO: encabezados.find(col => limpiarEncabezado(col).includes("FECHA ENVIO") || limpiarEncabezado(col).includes("FECHA REGISTRO"))
         };
 
         // Si no hay ninguna columna reconocida, rechazar
@@ -136,25 +136,34 @@ const cargarPadronDesdeExcel = async (req, res) => {
                 }
 
                 // Calcular FECHA_REGISTRO: si viene en el Excel, úsala; si no, usa la fecha actual
-                const hoy = new Date().toISOString().split('T')[0];
-                let fechaRegistro = hoy;
-                if (columnas.FECHA_REGISTRO && fila[columnas.FECHA_REGISTRO]) {
-                    const valor = fila[columnas.FECHA_REGISTRO];
-                    if (typeof valor === 'number') {
-                        // Fecha Excel numérica
-                        const fecha = new Date(Date.UTC(1899, 11, 30) + valor * 86400000);
-                        fechaRegistro = fecha.toISOString().split('T')[0];
-                    } else if (typeof valor === 'string') {
-                        const v = valor.trim();
-                        if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) {
-                            const [dia, mes, anio] = v.split('/');
-                            fechaRegistro = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-                        } else {
-                            const d = new Date(v);
-                            fechaRegistro = isNaN(d) ? hoy : d.toISOString().split('T')[0];
+                // Obtener la fecha local del sistema en formato YYYY-MM-DD
+                const hoy = (() => {
+                    const d = new Date();
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                })();
+                let fechaRegistro = columnas.FECHA_REGISTRO && fila[columnas.FECHA_REGISTRO]
+                    ? (() => {
+                        const valor = fila[columnas.FECHA_REGISTRO];
+                        if (typeof valor === 'number') {
+                            // Fecha Excel numérica
+                            const fecha = new Date(Date.UTC(1899, 11, 30) + valor * 86400000);
+                            return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
                         }
-                    }
-                }
+                        if (typeof valor === 'string') {
+                            const v = valor.trim();
+                            if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) {
+                                const [dia, mes, anio] = v.split('/');
+                                return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+                            }
+                            const d = new Date(v);
+                            return isNaN(d) ? null : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        }
+                        return null;
+                    })()
+                    : null;
 
                 const filaLimpia = {
                     CODIGO: columnas.CODIGO ? (fila[columnas.CODIGO] || '').toString().trim() : null,
@@ -178,7 +187,7 @@ const cargarPadronDesdeExcel = async (req, res) => {
                             if (typeof valor === 'number') {
                                 // Fecha Excel numérica
                                 const fecha = new Date(Date.UTC(1899, 11, 30) + valor * 86400000);
-                                return fecha.toISOString().split('T')[0];
+                                return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
                             }
                             if (typeof valor === 'string') {
                                 const v = valor.trim();
@@ -187,7 +196,7 @@ const cargarPadronDesdeExcel = async (req, res) => {
                                     return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
                                 }
                                 const d = new Date(v);
-                                return isNaN(d) ? null : d.toISOString().split('T')[0];
+                                return isNaN(d) ? null : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                             }
                             return null;
                         })()
