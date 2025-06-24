@@ -14,6 +14,7 @@ const poInicioSesionRoutes = require('./routes/poInicioSesionRoutes');
 const poInspeccionRoutes = require('./routes/poInspeccionRoutes'); 
 const porMovimientoRoutes = require('./routes/porMovimientoRoutes');
 const poMantenimientoRoutes = require('./routes/poMantenimientoRoutes');
+const poReporteRoutes = require('./routes/poReporteRoutes');
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerJSDoc = require('swagger-jsdoc');
@@ -79,6 +80,7 @@ app.use("/api/po-asignar-neumatico", poAsignarNeumaticoRoutes);
 app.use("/api/inspeccion", poInspeccionRoutes); 
 app.use("/api/po-movimiento", porMovimientoRoutes); 
 app.use("/api", poMantenimientoRoutes);
+app.use("/api/po-reportes", poReporteRoutes);
 
 
 // Servidor
