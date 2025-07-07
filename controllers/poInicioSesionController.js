@@ -55,4 +55,12 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = { login };
+const session = (req, res) => {
+    if (req.session.user) {
+        res.json(req.session.user);
+    } else {
+        res.status(401).json({ error: 'No autorizado' });
+    }
+};
+
+module.exports = { login, session };

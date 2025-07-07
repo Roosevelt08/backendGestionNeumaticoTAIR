@@ -257,4 +257,46 @@ const registrarDesasignacionNeumatico = async (req, res) => {
     }
 };
 
-module.exports = { registrarReubicacionNeumatico, registrarDesasignacionNeumatico };
+// Obtener la última fecha de inspección para un neumático y placa
+const getUltimaFechaInspeccion = async (req, res) => {
+    try {
+        const { codigo, placa } = req.query;
+        if (!codigo || !placa) {
+            return res.status(400).json({ error: "Faltan parámetros: codigo y placa son requeridos" });
+        }
+        const query = `
+            SELECT FECHA_REGISTRO
+            FROM SPEED400AT.NEU_INSPECCION
+            WHERE CODIGO = ? AND PLACA = ?
+            ORDER BY FECHA_REGISTRO DESC
+            FETCH FIRST 1 ROW ONLY
+        `;
+        const result = await db.query(query, [codigo, placa]);
+        res.json({ ultima: result[0]?.FECHA_REGISTRO || null });
+    } catch (error) {
+        res.status(500).json({ error: "Error al consultar la última fecha de inspección", detalle: error.message });
+    }
+};
+
+// Obtener la última fecha de inspección solo por placa
+const getUltimaFechaInspeccionPorPlaca = async (req, res) => {
+    try {
+        const { placa } = req.query;
+        if (!placa) {
+            return res.status(400).json({ error: "Falta el parámetro: placa es requerido" });
+        }
+        const query = `
+            SELECT FECHA_REGISTRO
+            FROM SPEED400AT.NEU_INSPECCION
+            WHERE PLACA = ?
+            ORDER BY FECHA_REGISTRO DESC
+            FETCH FIRST 1 ROW ONLY
+        `;
+        const result = await db.query(query, [placa]);
+        res.json({ ultima: result[0]?.FECHA_REGISTRO || null });
+    } catch (error) {
+        res.status(500).json({ error: "Error al consultar la última fecha de inspección por placa", detalle: error.message });
+    }
+};
+
+module.exports = { registrarReubicacionNeumatico, registrarDesasignacionNeumatico, getUltimaFechaInspeccion, getUltimaFechaInspeccionPorPlaca };

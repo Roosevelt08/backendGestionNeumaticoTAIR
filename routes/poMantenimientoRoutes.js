@@ -122,4 +122,68 @@ router.post("/registrorotacionneumatico", poMantenimientoController.registrarReu
 
 router.post("/registrardesasignacionneumatico", poMantenimientoController.registrarDesasignacionNeumatico);
 
+/**
+ * @swagger
+ * /api/ultima-fecha-inspeccion:
+ *   get:
+ *     summary: Obtener la última fecha de inspección para un neumático y placa
+ *     tags:
+ *       - Mantenimiento
+ *     parameters:
+ *       - in: query
+ *         name: codigo
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Código del neumático
+ *       - in: query
+ *         name: placa
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Placa del vehículo
+ *     responses:
+ *       200:
+ *         description: Última fecha de inspección encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ultima:
+ *                   type: string
+ *                   nullable: true
+ *                   description: Fecha de la última inspección o null si no existe
+ */
+router.get('/ultima-fecha-inspeccion', poMantenimientoController.getUltimaFechaInspeccion);
+
+/**
+ * @swagger
+ * /api/ultima-fecha-inspeccion-por-placa:
+ *   get:
+ *     summary: Obtener la última fecha de inspección solo por placa
+ *     tags:
+ *       - Mantenimiento
+ *     parameters:
+ *       - in: query
+ *         name: placa
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Placa del vehículo
+ *     responses:
+ *       200:
+ *         description: Última fecha de inspección encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ultima:
+ *                   type: string
+ *                   nullable: true
+ *                   description: Fecha de la última inspección o null si no existe
+ */
+router.get('/ultima-fecha-inspeccion-por-placa', poMantenimientoController.getUltimaFechaInspeccionPorPlaca);
+
 module.exports = router;
