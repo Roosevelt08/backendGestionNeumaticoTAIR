@@ -11,9 +11,47 @@ const poAsignadosController = require("../controllers/poAsignadosController");
 
 /**
  * @swagger
+ * /api/po-asignados/codigo/{codigo}:
+ *   get:
+ *     summary: Obtener neumáticos asignados por código de neumático
+ *     tags: [Neumáticos Asignados]
+ *     parameters:
+ *       - in: path
+ *         name: codigo
+ *         required: true
+ *         description: Código del neumático
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Lista de neumáticos asignados por código
+ *         content:
+ *           application/json:
+ *             example:
+ *               - ID: 1
+ *                 PLACA: "BLR-241"
+ *                 POSICION: "POS01"
+ *                 CODIGO: 1001
+ *                 MARCA: "PIRELLI"
+ *                 MEDIDA: "245/75R16"
+ *                 REMANENTE: 14
+ *                 ESTADO: "ASIGNADO"
+ *                 FECHA_ASIGNADO: "2025-05-09"
+ *                 USUARIO_ASIGNA: "JZAVALETA"
+ *       400:
+ *         description: Error de validación
+ *       500:
+ *         description: Error del servidor
+ */
+router.get("/codigo/:codigo", poAsignadosController.listarNeumaticosAsignadosPorCodigo);
+
+/**
+ * @swagger
  * /api/po-asignados/{placa}:
  *   get:
- *     summary: Obtener neumáticos asignados por placa
+ *     summary: Obtener neumáticos asignados vigentes por placa (uno por posición, excluye los dados de baja definitiva)
+ *     description: >-
+ *       Devuelve la lista de neumáticos actualmente asignados a un vehículo, mostrando solo el neumático vigente por cada posición (el de mayor fecha de asignación) y excluyendo aquellos cuya última acción registrada en movimientos es "BAJA DEFINITIVA".
  *     tags: [Neumáticos Asignados]
  *     parameters:
  *       - in: path
@@ -24,14 +62,14 @@ const poAsignadosController = require("../controllers/poAsignadosController");
  *           type: string
  *     responses:
  *       200:
- *         description: Lista de neumáticos asignados
+ *         description: Lista de neumáticos asignados vigentes (uno por posición, sin los dados de baja definitiva)
  *         content:
  *           application/json:
  *             example:
  *               - ID: 1
  *                 PLACA: "BLR-241"
  *                 POSICION: "POS01"
- *                 CODIGO_NEU: 1001
+ *                 CODIGO: 1001
  *                 MARCA: "PIRELLI"
  *                 MEDIDA: "245/75R16"
  *                 REMANENTE: 14

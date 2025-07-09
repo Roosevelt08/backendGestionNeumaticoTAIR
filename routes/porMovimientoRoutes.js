@@ -90,11 +90,12 @@ const poMovimientoController = require("../controllers/poMovimientoController");
  *         description: Error al obtener últimos movimientos de neumáticos
  */
 router.get("/ultimos/:placa", poMovimientoController.listarUltimosMovimientosPorPlaca);
+
 /**
  * @swagger
  * /api/po-movimiento/ultimos-codigo/{codigo}:
  *   get:
- *     summary: Obtiene el último movimiento de cada posición donde estuvo un neumático por su código
+ *     summary: Obtiene el último movimiento general de un neumático por su código
  *     tags:
  *       - Movimientos
  *     parameters:
@@ -106,7 +107,7 @@ router.get("/ultimos/:placa", poMovimientoController.listarUltimosMovimientosPor
  *         description: "Código del neumático (ejemplo: 1001)"
  *     responses:
  *       200:
- *         description: Últimos movimientos del neumático por posición
+ *         description: Último movimiento general del neumático
  *         content:
  *           application/json:
  *             schema:
