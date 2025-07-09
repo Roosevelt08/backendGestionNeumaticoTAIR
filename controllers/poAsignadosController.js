@@ -8,31 +8,11 @@ const listarNeumaticosAsignados = async (req, res) => {
             return res.status(400).json({ error: "La placa es requerida" });
         }
 
+        // Hacemos el TRIM de la placa en el backend para evitar problemas con el parámetro en DB2
         const placaTrim = placa.trim();
-        // Consulta: solo el neumático vigente por posición (mayor FECHA_ASIGNACION), y último movimiento no sea BAJA DEFINITIVA
-        const query = `
-            SELECT na.*
-            FROM SPEED400AT.NEU_ASIGNADO na
-            LEFT JOIN SPEED400AT.NEU_MOVIMIENTO nm
-              ON nm.CODIGO = na.CODIGO
-              AND nm.FECHA_MOVIMIENTO = (
-                  SELECT MAX(nm2.FECHA_MOVIMIENTO)
-                  FROM SPEED400AT.NEU_MOVIMIENTO nm2
-                  WHERE nm2.CODIGO = na.CODIGO
-              )
-            WHERE TRIM(na.PLACA) = ?
-              AND (nm.TIPO_MOVIMIENTO IS NULL OR UPPER(TRIM(nm.TIPO_MOVIMIENTO)) <> 'BAJA DEFINITIVA')
-              AND na.FECHA_ASIGNACION = (
-                  SELECT MAX(na2.FECHA_ASIGNACION)
-                  FROM SPEED400AT.NEU_ASIGNADO na2
-                  WHERE na2.PLACA = na.PLACA
-                    AND na2.POSICION_NEU = na.POSICION_NEU
-              )
-        `;
-        //console.log(`🟡 Ejecutando query filtrada: ${query} con placa: ${placaTrim}`);
+        const query = `SELECT * FROM SPEED400AT.NEU_ASIGNADO WHERE TRIM(PLACA) = ?`;
 
         const result = await db.query(query, [placaTrim]);
-        //console.log("🔵 Resultado crudo de la consulta filtrada:", JSON.stringify(result, null, 2));
 
         // Detectar si el resultado es un array, o si viene en result.rows o result.recordset
         let data = result;

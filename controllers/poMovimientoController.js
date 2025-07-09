@@ -13,7 +13,7 @@ const listarUltimosMovimientosPorPlaca = async (req, res) => {
       SELECT m.*
       FROM SPEED400AT.NEU_MOVIMIENTO m
       INNER JOIN (
-        SELECT CODIGO, MAX(FECHA_MOVIMIENTO) AS FECHA_MAX
+        SELECT CODIGO, POSICION_NEU, MAX(FECHA_MOVIMIENTO) AS FECHA_MAX
         FROM SPEED400AT.NEU_MOVIMIENTO
         WHERE TRIM(PLACA) = ?`;
         const params = [placaTrim];
@@ -22,9 +22,10 @@ const listarUltimosMovimientosPorPlaca = async (req, res) => {
             params.push(usuario_super.trim());
         }
         query += `
-        GROUP BY CODIGO
+        GROUP BY CODIGO, POSICION_NEU
       ) ult
         ON m.CODIGO = ult.CODIGO
+        AND m.POSICION_NEU = ult.POSICION_NEU
         AND m.FECHA_MOVIMIENTO = ult.FECHA_MAX
       WHERE TRIM(m.PLACA) = ?`;
         params.push(placaTrim);
@@ -42,7 +43,7 @@ const listarUltimosMovimientosPorPlaca = async (req, res) => {
     }
 };
 
-// Obtener el último movimiento general de un neumático por su código, filtrando por USUARIO_SUPER si se envía
+// Obtener el último movimiento de cada posición de un neumático por su código, filtrando por USUARIO_SUPER si se envía
 const listarUltimosMovimientosPorCodigo = async (req, res) => {
     try {
         const { codigo } = req.params;
@@ -54,15 +55,28 @@ const listarUltimosMovimientosPorCodigo = async (req, res) => {
         let query = `
       SELECT m.*
       FROM SPEED400AT.NEU_MOVIMIENTO m
-      WHERE TRIM(m.CODIGO) = ?`;
+      INNER JOIN (
+        SELECT POSICION_NEU, MAX(FECHA_MOVIMIENTO) AS FECHA_MAX
+        FROM SPEED400AT.NEU_MOVIMIENTO
+        WHERE TRIM(CODIGO) = ?`;
         const params = [codigoTrim];
+        if (usuario_super) {
+            query += ` AND TRIM(USUARIO_SUPER) = ?`;
+            params.push(usuario_super.trim());
+        }
+        query += `
+        GROUP BY POSICION_NEU
+      ) ult
+        ON m.POSICION_NEU = ult.POSICION_NEU
+        AND m.FECHA_MOVIMIENTO = ult.FECHA_MAX
+      WHERE TRIM(m.CODIGO) = ?`;
+        params.push(codigoTrim);
         if (usuario_super) {
             query += ` AND TRIM(m.USUARIO_SUPER) = ?`;
             params.push(usuario_super.trim());
         }
         query += `
-      ORDER BY m.FECHA_MOVIMIENTO DESC
-      LIMIT 1`;
+      ORDER BY m.FECHA_MOVIMIENTO DESC`;
         const result = await db.query(query, params);
         res.json(result);
     } catch (error) {
