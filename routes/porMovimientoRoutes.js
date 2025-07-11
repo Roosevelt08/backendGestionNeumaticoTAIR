@@ -179,6 +179,6 @@ router.get("/ultimos/:placa", poMovimientoController.listarUltimosMovimientosPor
  *         description: Error al obtener últimos movimientos por código
  */
 
-router.get("/ultimos-codigo/:codigo", poMovimientoController.listarUltimosMovimientosPorCodigo);
+router.get("/ultimos-codigo/:codigo", poMovimientoController.obtenerUltimosMovimientosPorCodigo);
 
 module.exports = router;

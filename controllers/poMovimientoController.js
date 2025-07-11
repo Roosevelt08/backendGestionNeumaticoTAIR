@@ -44,7 +44,7 @@ const listarUltimosMovimientosPorPlaca = async (req, res) => {
 };
 
 // Obtener el último movimiento de cada posición de un neumático por su código, filtrando por USUARIO_SUPER si se envía
-const listarUltimosMovimientosPorCodigo = async (req, res) => {
+const obtenerUltimosMovimientosPorCodigo = async (req, res) => {
     try {
         const { codigo } = req.params;
         const { usuario_super } = req.query;
@@ -87,5 +87,5 @@ const listarUltimosMovimientosPorCodigo = async (req, res) => {
 
 module.exports = {
     listarUltimosMovimientosPorPlaca,
-    listarUltimosMovimientosPorCodigo,
+    obtenerUltimosMovimientosPorCodigo,
 };

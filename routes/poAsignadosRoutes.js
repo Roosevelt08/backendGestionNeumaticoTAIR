@@ -116,4 +116,33 @@ router.get("/:placa", poAsignadosController.listarNeumaticosAsignados);
  */
 router.delete('/:id', poAsignadosController.eliminarAsignacion);
 
+/**
+ * @swagger
+ * /api/po-asignados/ultimo-movimiento/{placa}:
+ *   get:
+ *     summary: Obtener el último movimiento de cada posición de un vehículo por placa (sin BAJA DEFINITIVA ni RECUPERADO)
+ *     tags: [Neumáticos Asignados]
+ *     parameters:
+ *       - in: path
+ *         name: placa
+ *         required: true
+ *         description: Placa del vehículo
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Últimos movimientos por posición
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       400:
+ *         description: La placa es requerida
+ *       500:
+ *         description: Error al obtener últimos movimientos por placa
+ */
+router.get("/ultimo-movimiento/:placa", poAsignadosController.listaUltimoMovPlaca);
+
 module.exports = router;
